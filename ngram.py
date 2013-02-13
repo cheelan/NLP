@@ -1,7 +1,8 @@
 from __future__ import with_statement
+import sys
 
 "hi"
-sentence = "Apple ate an Apple"
+sentence = "Apple ate an Apple and then projectile vomited all over Anna"
 unigrams = dict()
 ngrams = dict()
 
@@ -42,7 +43,7 @@ def ngram(n, words):
         
 
 unigram()
-ngram(3, sentence)
+ngram(int(sys.argv[1]), sentence)
 print(unigrams["Apple"])
 print(str(ngrams))
 
