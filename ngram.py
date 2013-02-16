@@ -1,10 +1,15 @@
 from __future__ import with_statement
 import sys
+import itertools
+import nltk.data
+import copy
 
-"hi"
-sentence = "Apple ate an Apple and then projectile vomited all over Anna"
+
+sentence = "Apple ate an Apple"
 unigrams = dict()
 ngrams = dict()
+totalCount = 0
+
 
 #Perhaps make an ngram object
 #Could be a list of the n words
@@ -15,17 +20,34 @@ def unigram():
             unigrams[w] = unigrams.pop(w) + 1
         else:
             unigrams[w] = 1
-
+'''
+def nltkTest():
+    text = """
+... Punkt knows that the periods in Mr. Smith and Johann S. Bach
+... do not mark sentence boundaries.  And sometimes sentences
+... can start with non-capitalized words.  i is a good variable
+... name.
+... """
+    sent_detector = nltk.data.load('tokenizers/punkt/english.pickle')
+    print '\n-----\n'.join(sent_detector.tokenize(text.strip()))
+'''
 
 #n: number of grams (1 = unigram, 2 = bigram, etc.)
 #words: a group of words to model
 #Returns a dictionary with keys that strings representing lists of words, and values that are counts
 #TO-DO: Punctuation (find and replace should do the trick)
 def ngram(n, words):
+    global totalCount
     prev = list()
+    vocab = dict()
     for w in words.split(" "):
         #Convert everything to lowercase. Check that this is ok
         w = w.lower()
+        #This happens to be a unigram
+        if w in vocab:
+            vocab[w] = vocab.pop(w) + 1
+        else:
+            vocab[w] = 1
         #Mantain queue of n most recent words
         if len(prev) >= n:
             prev.pop(0)
@@ -33,17 +55,41 @@ def ngram(n, words):
         prev.append(w)
         if len(prev) < n:
             continue
-        hashcode = str(prev)
-        if hashcode in ngrams:
-            ngrams[hashcode] = ngrams.pop(hashcode) + 1
+        totalCount = totalCount + 1
+        temp = copy.deepcopy(prev)
+        nthWord = temp.pop()
+        nMinusOneKey = str(temp)
+        if nMinusOneKey in ngrams:
+            miniDict = ngrams[nMinusOneKey] #Copy or pointer?
+            if nthWord in miniDict:
+                miniDict[nthWord] = miniDict.pop(nthWord) + 1
+            else:
+                miniDict[nthWord] = 1
         else:
-            ngrams[hashcode] = 1
-        
-        
-        
+            ngrams[nMinusOneKey] = {nthWord : 1}
 
-unigram()
-ngram(int(sys.argv[1]), sentence)
-print(unigrams["Apple"])
+    fillZeros(vocab, n)
+        
+def fillZeros(vocab, n):
+    for perm in itertools.product(vocab.keys(), repeat=n):
+        key = list()
+        for p in perm[0:(n-1)]:
+            key.append(p)
+        last = str(perm[n-1])
+        key = str(key)
+        
+        #key = key.replace("(", "[")
+        #key = key.replace(")", "]")
+        #Do this better. Data with parentheses will break ^
+        if not (key in ngrams): 
+            ngrams[key] = {last : 0};
+        else:
+            if not (last in ngrams[key]):
+                (ngrams[key])[last] = 0 
+
+#ngram(int(sys.argv[1]), sentence)
+ngram(3, sentence)
+#print(unigrams["Apple"])
 print(str(ngrams))
-
+print(totalCount)
+#nltkTest()
