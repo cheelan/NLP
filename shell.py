@@ -1,30 +1,46 @@
 import os, pickle
 
-class Shell:
+class Gram:
     dictionary = {}
+    n = 0
+
+    def __init__(self, args):
+        n = args
+
+
+
+class Shell:
+    bigram = None
+    ngram = None
 
     def __init__(self):
-        self.currentDirectory = os.getcwd()
         print("For a list of commands, type \"help\"")
 
     def train(self, args):
-        for train_file in args:
-            self.ngram(train_file)
+        ngram = Gram(args[1])
+        for train_file in args[2:]:
+            self.nparse(train_file)
 
-    def ngram(self,args):
+    def nparse(self,args):
         pass
 
     def test(self, args):
         pass
 
     def import_data(self, args):
-        self.dictionary = pickle.load(open("data.log"))
+        self.bigram, self.ngram = pickle.load(open("data.log"))
 
     def export_data(self, args):
-        pickle.dump(self.dictionary, open("data.log",'wb'))
+        pickle.dump(self.ngram, open("data.log",'wb'))
 
     def help(self,args):
         print("The follow are valid commands:\nimport_data\nexport_data\nparse\ntest\nhelp\nexit")
+
+    def generate_random(self,args):
+        pass
+
+    def lookup(self,args):
+        pass
 
     def exit(self, args):
         print("Exiting...")
