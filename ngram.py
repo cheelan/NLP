@@ -68,14 +68,24 @@ def ngram(n, words):
         else:
             ngrams[nMinusOneKey] = {nthWord : 1}
 
-    #fillZeros(vocab, n)
+    fillZeros(vocab, n)
         
 def fillZeros(vocab, n):
     for perm in itertools.product(vocab.keys(), repeat=n):
-        perm = str(perm).replace("(", "[")
-        perm = perm.replace(")", "]")
-        if not (perm in ngrams): 
-            ngrams[perm] = 0;
+        key = list()
+        for p in perm[0:(n-1)]:
+            key.append(p)
+        last = str(perm[n-1])
+        key = str(key)
+        
+        #key = key.replace("(", "[")
+        #key = key.replace(")", "]")
+        #Do this better. Data with parentheses will break ^
+        if not (key in ngrams): 
+            ngrams[key] = {last : 0};
+        else:
+            if not (last in ngrams[key]):
+                (ngrams[key])[last] = 0 
 
 #ngram(int(sys.argv[1]), sentence)
 ngram(3, sentence)
