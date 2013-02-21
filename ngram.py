@@ -87,6 +87,18 @@ def fillZeros(vocab, n):
             if not (last in ngrams[key]):
                 (ngrams[key])[last] = 0 
 
+#Utility functions for our special nested dictionary
+def updateCount(dict, ngram, newCount):
+    pass
+
+def getCount(dict, ngram):
+    pass
+
+#Applies Good-Turing smoothing to all ngrams in dict that appear less than bound times
+#We might have to iterate over the whole dictionary. Yuck.
+#Optimization could be to iterate before we fill with zeros - the dict will be much smaller
+def gtSmooth(dict, bound):
+    pass
 #ngram(int(sys.argv[1]), sentence)
 ngram(3, sentence)
 #print(unigrams["Apple"])
