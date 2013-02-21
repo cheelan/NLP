@@ -89,10 +89,27 @@ def fillZeros(vocab, n):
 
 #Utility functions for our special nested dictionary
 def updateCount(dict, ngram, newCount):
-    pass
+    #Convert the string input to a list
+    l = [ngram.strip(" '") for ngram in ngram.strip('[]').split(',')]
+    #the last word
+    word = l.pop() 
+    key = str(l)
+    if key in dict and word in dict[key]:
+        dict[key][word] = newCount
+        return
+    print("WARNING: " + ngram + " is not in the current model, so it can't be updated")
 
 def getCount(dict, ngram):
-    pass
+    #Convert the string input to a list
+    l = [ngram.strip(" '") for ngram in ngram.strip('[]').split(',')]
+    #the last word
+    word = l.pop() 
+    key = str(l)
+    if key in dict and word in dict[key]:
+        return dict[key][word]
+    return 0
+
+     
 
 #Applies Good-Turing smoothing to all ngrams in dict that appear less than bound times
 #We might have to iterate over the whole dictionary. Yuck.
@@ -100,7 +117,10 @@ def getCount(dict, ngram):
 def gtSmooth(dict, bound):
     pass
 #ngram(int(sys.argv[1]), sentence)
-ngram(3, sentence)
+ngram(1, sentence)
+print(getCount(ngrams, "apple"))
+updateCount(ngrams, "apple", 42)
+print(getCount(ngrams, "apple"))
 #print(unigrams["Apple"])
 print(str(ngrams))
 print(totalCount)
