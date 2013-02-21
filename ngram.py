@@ -3,9 +3,11 @@ import sys
 import itertools
 import nltk.data
 import copy
+from nltk.tokenize import WordPunctTokenizer as WPT
 
 
 sentence = "Apple ate an Apple"
+sentence2 = "That's just like, your opinion, man"
 unigrams = dict()
 ngrams = dict()
 totalCount = 0
@@ -40,6 +42,9 @@ def ngram(n, words):
     global totalCount
     prev = list()
     vocab = dict()
+    #need to try and find better RegEx
+    tokenized = WPT().tokenize(words)
+    #for w in tokenized:
     for w in words.split(" "):
         #Convert everything to lowercase. Check that this is ok
         w = w.lower()
@@ -114,14 +119,15 @@ def getCount(dict, ngram):
 #Applies Good-Turing smoothing to all ngrams in dict that appear less than bound times
 #We might have to iterate over the whole dictionary. Yuck.
 #Optimization could be to iterate before we fill with zeros - the dict will be much smaller
-def gtSmooth(dict, bound):
+def getSmooth(dict, bound):
     pass
 #ngram(int(sys.argv[1]), sentence)
 ngram(1, sentence)
+#ngram(1, sentence2)
 print(getCount(ngrams, "apple"))
 updateCount(ngrams, "apple", 42)
 print(getCount(ngrams, "apple"))
-#print(unigrams["Apple"])
+print(unigrams["Apple"])
 print(str(ngrams))
 print(totalCount)
 #nltkTest()
