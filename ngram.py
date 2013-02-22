@@ -6,7 +6,7 @@ import copy
 from nltk.tokenize import WordPunctTokenizer as WPT
 
 
-sentence = "Apple ate an Apple"
+sentence = "Apple ate an Apple an Apple an Apple"
 sentence2 = "That's just like, your opinion, man"
 unigrams = dict()
 ngrams = dict()
@@ -41,7 +41,7 @@ def nltkTest():
 smoothingBound = 3 #Will eventually turn this into a param whenever I figure this out
 def ngram(n, words):
     global totalCount
-    countList = [0]*smoothingBound
+    countList = [0]*(smoothingBound + 1)
     prev = list()
     vocab = dict()
     #need to try and find better RegEx
@@ -77,13 +77,15 @@ def ngram(n, words):
         count = ngrams[nMinusOneKey][nthWord]
         if count > 1:
             countList[count-1] -= 1
-        if count < smoothingBound:
+        if count <= smoothingBound:
             countList[count] += 1
     countList[0] = totalCount**n - len(ngrams)
-    print("---")
-    print(countList)
-    print("---")
+    #print("---")
+    #print(countList)
+    #print("---")
     fillZeros(vocab, n)
+    print(ngrams)
+    applySmoothing(countList, smoothingBound)
         
 def fillZeros(vocab, n):
     for perm in itertools.product(vocab.keys(), repeat=n):
@@ -124,17 +126,30 @@ def getCount(dict, ngram):
         return dict[key][word]
     return 0
 
-     
+
+def gtSmooth(countList, ngram, smoothingBound):
+    count = 0
+    if ngram in ngrams:
+        count = ngrams[ngram]
+    if count >= smoothingBound:
+        return count
+    return (count + 1) * (countList[count+1] / countList[count])
 
 #Applies Good-Turing smoothing to all ngrams in dict that appear less than bound times
 #We might have to iterate over the whole dictionary. Yuck.
 #Optimization could be to iterate before we fill with zeros - the dict will be much smaller
-def getSmooth(dict, bound):
-    pass
+def applySmoothing(countList, smoothingBound):
+    for k in ngrams.keys():
+        for k2 in ngrams[k].keys():
+            count = ngrams[k][k2]
+            if count < smoothingBound:
+                ngrams[k][k2] = (count + 1) * (float(countList[count+1]) / float(countList[count]))
+
+                  
 #ngram(int(sys.argv[1]), sentence)
 
 ngram(2, sentence)
-
+print("Count 0: "+ str(getCount(ngrams, "['ate', 'apple']")))
 
 print(str(ngrams))
 print(totalCount)
