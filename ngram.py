@@ -36,8 +36,10 @@ def nltkTest():
 #words: a group of words to model
 #Returns a dictionary with keys that strings representing lists of words, and values that are counts
 #TO-DO: Punctuation (find and replace should do the trick)
+smoothingBound = 3 #Will eventually turn this into a param whenever I figure this out
 def ngram(n, words):
     global totalCount
+    countList = [0]*smoothingBound
     prev = list()
     vocab = dict()
     for w in words.split(" "):
@@ -67,7 +69,15 @@ def ngram(n, words):
                 miniDict[nthWord] = 1
         else:
             ngrams[nMinusOneKey] = {nthWord : 1}
-
+        count = ngrams[nMinusOneKey][nthWord]
+        if count > 1:
+            countList[count-1] -= 1
+        if count < smoothingBound:
+            countList[count] += 1
+    countList[0] = totalCount**n - len(ngrams)
+    print("---")
+    print(countList)
+    print("---")
     fillZeros(vocab, n)
         
 def fillZeros(vocab, n):
@@ -117,10 +127,8 @@ def getCount(dict, ngram):
 def gtSmooth(dict, bound):
     pass
 #ngram(int(sys.argv[1]), sentence)
-ngram(1, sentence)
-print(getCount(ngrams, "apple"))
-updateCount(ngrams, "apple", 42)
-print(getCount(ngrams, "apple"))
+ngram(2, sentence)
+
 #print(unigrams["Apple"])
 print(str(ngrams))
 print(totalCount)
