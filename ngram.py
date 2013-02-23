@@ -126,7 +126,7 @@ def getCount(dict, ngram):
         return dict[key][word]
     return 0
 
-
+#Currently not used
 def gtSmooth(countList, ngram, smoothingBound):
     count = 0
     if ngram in ngrams:
@@ -145,7 +145,8 @@ def applySmoothing(countList, smoothingBound):
             if count < smoothingBound:
                 ngrams[k][k2] = (count + 1) * (float(countList[count+1]) / float(countList[count]))
 
-                  
+def randomSentence():
+                      
 #ngram(int(sys.argv[1]), sentence)
 
 ngram(2, sentence)
