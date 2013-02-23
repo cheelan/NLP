@@ -3,10 +3,15 @@ import sys
 import itertools
 import nltk.data
 import copy
+import random
 from nltk.tokenize import WordPunctTokenizer
 
 
-sentence = "Apple ate an Apple an Apple an Apple"
+sentence = """STARTSEN You will rejoice to hear that no disaster has accompanied the
+commencement of an enterprise which you have regarded with such evil
+forebodings.ENDSEN STARTSEN  I arrived here yesterday, and my first task is to assure
+my dear sister of my welfare and increasing confidence in the success
+of my undertaking. ENDSEN"""
 sentence2 = "That's just like, your opinion, man"
 unigrams = dict()
 ngrams = dict()
@@ -81,7 +86,7 @@ def ngram(n, words):
     #print(countList)
     #print("---")
     fillZeros(vocab, n)
-    print(ngrams)
+    #print(ngrams)
     applySmoothing(countList, smoothingBound)
         
 def fillZeros(vocab, n):
@@ -143,12 +148,39 @@ def applySmoothing(countList, smoothingBound):
                 ngrams[k][k2] = (count + 1) * (float(countList[count+1]) / float(countList[count]))
 
 def randomSentence():
-    pass
+    prev = "['startsen']"
+    sentence = ""
+    #Import bigram table if it exists
+    #Otherwise generate one
+    while True:
+        sum = float(0)
+        rand = random.random()
+        if prev in ngrams:
+            for v in ngrams[prev].values():
+                sum += v
+            print("COUNT: " + str(sum))
+            runningSum = float(0)
+            for (k,v) in ngrams[prev].iteritems():
+                runningSum += v / sum
+                if (runningSum >= rand):
+                    if k == "startsen":
+                        break
+                    if k == "endsen":
+                        return sentence
+                    sentence += " " + k
+                    prev = "['" + k + "']"
+        else:
+            print("Error: " + prev + " not in ngram model")
+            break
+
+
+
 #ngram(int(sys.argv[1]), sentence)
 
 ngram(2, sentence)
 print("Count 0: "+ str(getCount(ngrams, "['ate', 'apple']")))
-
-print(str(ngrams))
+print("Random sentence: " + randomSentence())
+print(ngrams["['.']"])
+#print(str(ngrams))
 print(totalCount)
 #nltkTest()
