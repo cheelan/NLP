@@ -1,4 +1,4 @@
-import os, pickle, anydbm, time, nltk.tokenize
+import os, pickle, anydbm, time, nltk.tokenize, operator, re
 
 class Gram:
     dictionary = None
@@ -9,7 +9,8 @@ class Gram:
         self.dictionary = {}
 
     def print_out(self):
-        print(self.dictionary)
+        sorted_dictionary = sorted(self.dictionary.iteritems(), key= operator.itemgetter(1), reverse = True)
+        print(sorted_dictionary[:100])
 
     def add(self, word):
         if word in self.dictionary:
@@ -24,33 +25,32 @@ class Shell:
 
     def __init__(self):
         print("For a list of commands, type \"help\"")
-
-    def initialize(self, args):
         self.unigram = Gram(1)
         self.bigram = Gram(2)
-        self.ngram = Gram(3)
-        self.unigram.add("unigram")
-        self.bigram.add("bigram")
-        self.ngram.add("trigram")
-        self.unigram.print_out()
-        self.bigram.print_out()
-        self.ngram.print_out()
 
-    def create_unigram(self, args):
+    def text_parse(self):
         text = ''
-        print(time.time())
         for fname in os.listdir(os.getcwd()):
             if fname.endswith(".train"):
                 inputFile = open(fname,'r')
                 text+=inputFile.read()
                 inputFile.close()
+        text = re.compile(r'<.*?>').sub('',text)
+        return text
+
+    def create_unigram(self, args):
+        print(time.time())
+        text = self.text_parse()
         print(time.time())
         sentences = nltk.tokenize.sent_tokenize(text)
         print(time.time())
-        for i in sentences[:5]:
+        for i in sentences:
+            self.unigram.add('<S>')
             for word in nltk.tokenize.word_tokenize(i):
                 self.unigram.add(word.lower())
+            self.unigram.add('</S>')
         self.unigram.print_out()
+        print(time.time())
 
     def bigram(self, args):
         pass
@@ -58,20 +58,14 @@ class Shell:
     def ngram(self, args):
         pass
 
-    def test(self, args):
-        pass
-
     def import_data(self, args):
-        data = anydbm.open('data.log', 'c')
+        data = anydbm.open('data.log', 'r')
         self.unigram = pickle.loads(data['unigram'])
-        self.unigram.print_out()
         self.bigram = pickle.loads(data['bigram'])
-        self.bigram.print_out()
         self.ngram = pickle.loads(data['ngram'])
-        self.ngram.print_out()
 
     def export_data(self, args):
-        data = anydbm.open('data.log', 'c')
+        data = anydbm.open('data.log', 'n')
         data['unigram'] = pickle.dumps(self.unigram)
         data['bigram'] = pickle.dumps(self.bigram)
         data['ngram'] = pickle.dumps(self.ngram)
