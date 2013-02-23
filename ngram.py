@@ -88,6 +88,9 @@ def ngram(n, words):
     fillZeros(vocab, n)
     #print(ngrams)
     applySmoothing(countList, smoothingBound)
+
+def getSentenceProb(sent, model, n):
+    pass
         
 def fillZeros(vocab, n):
     for perm in itertools.product(vocab.keys(), repeat=n):
@@ -169,6 +172,7 @@ def randomSentence():
                         return sentence
                     sentence += " " + k
                     prev = "['" + k + "']"
+                    break
         else:
             print("Error: " + prev + " not in ngram model")
             break
@@ -180,7 +184,7 @@ def randomSentence():
 ngram(2, sentence)
 print("Count 0: "+ str(getCount(ngrams, "['ate', 'apple']")))
 print("Random sentence: " + randomSentence())
-print(ngrams["['.']"])
+#print(ngrams["[',']"])
 #print(str(ngrams))
 print(totalCount)
 #nltkTest()
