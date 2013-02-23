@@ -3,7 +3,7 @@ import sys
 import itertools
 import nltk.data
 import copy
-from nltk.tokenize import WordPunctTokenizer as WPT
+from nltk.tokenize import WordPunctTokenizer
 
 
 sentence = "Apple ate an Apple an Apple an Apple"
@@ -44,10 +44,7 @@ def ngram(n, words):
     countList = [0]*(smoothingBound + 1)
     prev = list()
     vocab = dict()
-    #need to try and find better RegEx
-    tokenized = WPT().tokenize(words)
-    #for w in tokenized:
-    for w in words.split(" "):
+    for w in WordPunctTokenizer().tokenize(words):
         #Convert everything to lowercase. Check that this is ok
         w = w.lower()
         #This happens to be a unigram
@@ -146,7 +143,7 @@ def applySmoothing(countList, smoothingBound):
                 ngrams[k][k2] = (count + 1) * (float(countList[count+1]) / float(countList[count]))
 
 def randomSentence():
-                      
+    pass
 #ngram(int(sys.argv[1]), sentence)
 
 ngram(2, sentence)
