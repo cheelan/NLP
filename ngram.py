@@ -103,13 +103,13 @@ class Gram:
                 p *= zero_count
                 continue
             i = 0
-            sum = 0.
+            summation = 0.
             for v in model[key].values():
                 i += 1
-                sum += v
+                summation += v
             #TO-DO Let's double check that..
-            sum += float(totalCount - i) * (float(countList[1]) / float(countList[0])) 
-            p *= 1. / (float(model[key][nMinusOne]) / sum)
+            summation += float(totalCount - i) * (float(countList[1]) / float(countList[0])) 
+            p *= 1. / (float(model[key][nMinusOne]) / summation)
 
         return p**(1. / float(len(sent)))
 
