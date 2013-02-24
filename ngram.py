@@ -89,8 +89,32 @@ def ngram(n, words):
     #print(ngrams)
     applySmoothing(countList, smoothingBound)
 
-def getSentenceProb(sent, model, n):
-    pass
+#sent: a regular sentence string, not delimited or anything
+#model: the n-gram model of choice
+#n: the n in n-gram
+#output: a score proportional to the probability of the sentence coming from that model
+#Handling unknowns... hmmm
+def getSentenceScore(sent, model, n):
+    p = 1.0
+    lst = list()
+    for w in WordPunctTokenizer().tokenize(sent):
+        w = w.lower()
+        lst.append(w)
+        if len(lst) < n:
+            continue
+        if len(lst) > n:
+            lst.pop(0)
+        nMinusOne = str(lst.pop())
+        key = str(lst)
+        #Need to adjust these for unknown words
+        if not (key in model):
+            return 0
+        if not (nMinusOne in model[key]):
+            return 0
+        p += model[key][nMinusOne]
+    return p
+
+        
         
 def fillZeros(vocab, n):
     for perm in itertools.product(vocab.keys(), repeat=n):
@@ -184,6 +208,7 @@ def randomSentence():
 ngram(2, sentence)
 print("Count 0: "+ str(getCount(ngrams, "['ate', 'apple']")))
 print("Random sentence: " + randomSentence())
+print("Score of a sentence: " + str(getSentenceScore("You will rejoice to hear that no disaster has accompanied", ngrams, 2)))
 #print(ngrams["[',']"])
 #print(str(ngrams))
 print(totalCount)
