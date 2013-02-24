@@ -1,9 +1,16 @@
 import sys, itertools, copy, random, nltk.tokenize
 
+sentence = '''<S>You will rejoice to hear that no disaster has accompanied the
+commencement of an enterprise which you have regarded with such evil
+forebodings.</S><S>  I arrived here yesterday, and my first task is to assure
+my dear sister of my welfare and increasing confidence in the success
+of my undertaking.</S>'''
+
 class Gram:
     n = 0
     dictionary = None
     unique_words = 0
+    total_grams = 0
     count_list = [0]
     smoothing_bound = 0
 
@@ -74,7 +81,7 @@ class Gram:
             self.word_count+=1
             self.dictionary[word] = 1
     '''
-
+'''
     #text: regular text
     #model: the n-gram model of choice
     #n: the n in n-gram
@@ -94,14 +101,30 @@ class Gram:
             nMinusOne = str(lst.pop())
             key = str(lst)
             #Need to adjust these for unknown words
-            zero_count = (self.smoothing_bound > 0 ? float(countList[1]) / float(countList[0]) : 0)
+            if self.smoothing_bound > 0:
+                zero_count = float(self.count_list[1]) / float(self.count_list[0])
+            else:
+                zero_count = 0
 
+            
+            numerator = 0.
+            denominator = 0.
 
             if not (key in model):
-                return zero_count
-            if not (nMinusOne in model[key]):
-                p *= zero_count
-                continue
+                numerator = zero_count
+                denominator = 
+            elif key in model and (not (nMinusOne in model[key])):
+
+            elif key in model and nMinusOne in model[key]:
+             
+
+           
+
+            if not (key in model) or (not (nMinusOne in model[key])):
+                numerator = zero_count
+            else:
+                numerator = (float(model[key][nMinusOne]))
+
             i = 0
             summation = 0.
             for v in model[key].values():
@@ -109,10 +132,10 @@ class Gram:
                 summation += v
             #TO-DO Let's double check that..
             summation += float(totalCount - i) * (float(countList[1]) / float(countList[0])) 
-            p *= 1. / (float(model[key][nMinusOne]) / summation)
+            p *= 1. / numerator / summation)
 
         return p**(1. / float(len(sent)))
-
+'''
         
         
 def fillZeros(vocab, n):
@@ -199,10 +222,10 @@ def randomSentence():
 
 #ngram(int(sys.argv[1]), sentence)
 
-ngram(2, sentence)
-print("Count 0: "+ str(getCount(ngrams, "['ate', 'apple']")))
+test = Gram(2, sentence, 3)
+#print("Count 0: "+ str(getCount(ngrams, "['ate', 'apple']")))
 #print("Random sentence: " + randomSentence())
-print("Score of a sentence: " + str(getSentencePerplexity("You will rejoice to hear that no disaster has accompanied", ngrams, 2)))
+#print("Score of a sentence: " + str(getSentencePerplexity("You will rejoice to hear that no disaster has accompanied", ngrams, 2)))
 #print(ngrams["[',']"])
 #print(str(ngrams))
 
