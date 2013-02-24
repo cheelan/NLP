@@ -7,7 +7,8 @@ forebodings. I arrived here yesterday, and my first task is to assure
 my dear sister of my welfare and increasing confidence in the success
 of my undertaking."""
 
-#sentence = "An apple an apple an apple an apple grape grape grape fruit."
+sentence = "I went to the bank. The bank had a lot of people. The people had a lot of money. The people went to the cars."
+#sentence = "An apple an apple an apple an apple grape grape grape fruit.
 
 
 '''
@@ -65,7 +66,7 @@ class Gram:
             # Keeping track of counts in the countList
             if (self.smoothing_bound > 0):
                 count = self.dictionary[nMinusOneKey][nthWord]
-                if count > 1:
+                if count > 1 and count <= (self.smoothing_bound+1):
                     self.count_list[count-1] -= 1
                 if count <= self.smoothing_bound:
                     self.count_list[count] += 1
@@ -249,12 +250,14 @@ def randomSentence():
 
 #ngram(int(sys.argv[1]), sentence)
 
-test = Gram(2, sentence, 3)
+test = Gram(2, sentence, 2)
 print(test.dictionary)
 print(test.count_list)
 #print("Count 0: "+ str(getCount(ngrams, "['ate', 'apple']")))
 #print("Random sentence: " + randomSentence())
 print("Score of a sentence: " + str(test.getPerplexity("You will rejoice to hear that no disaster has accompanied")))
+
+print("Score of a sentence: " + str(test.getPerplexity("The bank cars.")))
 #print(ngrams["[',']"])
 #print(str(ngrams))
 
