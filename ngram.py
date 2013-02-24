@@ -32,35 +32,28 @@ forebodings.ENDSEN STARTSEN  I arrived here yesterday, and my first task is to a
 my dear sister of my welfare and increasing confidence in the success
 of my undertaking. ENDSEN"""
 
-unigrams = dict()
-ngrams = dict()
-totalCount = 0
-countList = []
-
 #n: number of grams (1 = unigram, 2 = bigram, etc.)
 #text: a text corpus to model
+#smoothingBound: smooth all words that appear less than the smoothingBound
 #Returns a dictionary with keys that strings representing lists of words, and values that are counts
 #TO-DO: Punctuation (find and replace should do the trick)
-def ngram(n, text, smoothingBound = 3):
-    global totalCount
-    global countList
+def ngram(n, text, smoothingBound ):
+    ngrams = dict()
+    previous = list()
+    totalCount = 0
     countList = [0]*(smoothingBound + 1)
-    prev = list()
-    vocab = dict()
     for sentence in nltk.tokenize.sent_tokenize(text):
-        for w in WordPunctTokenizer().tokenize(text):
-        for word in nltk.tokenize.word_tokenize(i)
-            #Convert everything to lowercase. Check that this is ok
-            w = w.lower()
-            #Mantain queue of n most recent words
-            if len(prev) >= n:
-                prev.pop(0)
-            #Look up n-1 words + current word in HT
-            prev.append(w)
-            if len(prev) < n:
+        for word in (['<S>'] + nltk.tokenize.word_tokenize(sentence) + ['</S>']):
+            #Change all words to lowercase
+            word = word.lower()
+            #Maintain queue of n most recent words
+            previous.append(word)
+            if len(previous) < n:
                 continue
-            totalCount = totalCount + 1
-            temp = copy.deepcopy(prev)
+            while len(previous) > n:
+                previous.pop(0)
+            totalCount+=1
+            temp = copy.deepcopy(previous)
             nthWord = temp.pop()
             nMinusOneKey = str(temp)
             if nMinusOneKey in ngrams:
@@ -76,9 +69,8 @@ def ngram(n, text, smoothingBound = 3):
                 countList[count-1] -= 1
             if count <= smoothingBound:
                 countList[count] += 1
-
     countList[0] = totalCount**n - len(ngrams)
-    applySmoothing(smoothingBound)
+    applySmoothing(smoothingBound, ngrams, countList)
 
 #sent: a regular sentence string, not delimited or anything
 #model: the n-gram model of choice
@@ -167,7 +159,7 @@ def gtSmooth(ngram, smoothingBound):
 #Applies Good-Turing smoothing to all ngrams in dict that appear less than bound times
 #We might have to iterate over the whole dictionary. Yuck.
 #Optimization could be to iterate before we fill with zeros - the dict will be much smaller
-def applySmoothing(smoothingBound):
+def applySmoothing(smoothingBound, ngrams, countList):
     for k in ngrams.keys():
         for k2 in ngrams[k].keys():
             count = ngrams[k][k2]
