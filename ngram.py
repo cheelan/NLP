@@ -1,10 +1,14 @@
 import sys, itertools, copy, random, nltk.tokenize
 
-sentence = '''You will rejoice to hear that no disaster has accompanied the
+'''
+sentence = "You will rejoice to hear that no disaster has accompanied the
 commencement of an enterprise which you have regarded with such evil
 forebodings. I arrived here yesterday, and my first task is to assure
 my dear sister of my welfare and increasing confidence in the success
-of my undertaking.'''
+of my undertaking."
+'''
+sentence = "Apple is an apple."
+
 
 class Gram:
     n = 0
@@ -58,7 +62,7 @@ class Gram:
                 if count <= self.smoothing_bound:
                     self.count_list[count] += 1
         self.count_list[0] = self.unique_words**n - unique_ngrams
-        self.apply_smoothing()
+        #self.apply_smoothing()
 
     #Applies Good-Turing smoothing to all ngrams in dict that appear less than bound times
     #We might have to iterate over the whole dictionary. Yuck.
@@ -236,6 +240,7 @@ def randomSentence():
 #ngram(int(sys.argv[1]), sentence)
 
 test = Gram(2, sentence, 3)
+print(test.dictionary)
 #print("Count 0: "+ str(getCount(ngrams, "['ate', 'apple']")))
 #print("Random sentence: " + randomSentence())
 #print("Score of a sentence: " + str(getSentencePerplexity("You will rejoice to hear that no disaster has accompanied", ngrams, 2)))
