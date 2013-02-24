@@ -7,7 +7,7 @@ forebodings. I arrived here yesterday, and my first task is to assure
 my dear sister of my welfare and increasing confidence in the success
 of my undertaking."
 '''
-sentence = "Apple is an apple."
+sentence = "Apple is an orange."
 
 
 class Gram:
@@ -26,13 +26,16 @@ class Gram:
     def __init__(self, n, text, smoothingBound ):
         self.n = n
         self.dictionary = {}
-        self.smoothing_bound = smoothingBound + 1
-        self.count_list*=(self.smoothing_bound)
+        self.smoothing_bound = smoothingBound
+        self.count_list*=(self.smoothing_bound + 1)
         unique_ngrams = 0
+        vocab = set()
+
 
         previous = list()   # Sentences are NOT independent of one another. 
         word_generator = self.text_parse(text)
         for word in word_generator:
+            vocab.add(word)
             #Maintain queue of n most recent words
             previous.append(word)
             if len(previous) < n:
@@ -49,10 +52,10 @@ class Gram:
                     miniDict[nthWord]+= 1
                 else:
                     miniDict[nthWord] = 1
-                    self.unique_words+=1
                     unique_ngrams+=1
             else:
                 self.dictionary[nMinusOneKey] = {nthWord : 1}
+                self.unique_words+=1
                 unique_ngrams+=1
             # Keeping track of counts in the countList
             if (self.smoothing_bound > 0):
@@ -61,7 +64,12 @@ class Gram:
                     self.count_list[count-1] -= 1
                 if count <= self.smoothing_bound:
                     self.count_list[count] += 1
+
+
+        self.unique_words = len(vocab)
         self.count_list[0] = self.unique_words**n - unique_ngrams
+        print("UNique_words: " + str(self.unique_words))
+        print("UNique_grams: " + str(unique_ngrams))
         #self.apply_smoothing()
 
     #Applies Good-Turing smoothing to all ngrams in dict that appear less than bound times
@@ -241,6 +249,7 @@ def randomSentence():
 
 test = Gram(2, sentence, 3)
 print(test.dictionary)
+print(test.count_list)
 #print("Count 0: "+ str(getCount(ngrams, "['ate', 'apple']")))
 #print("Random sentence: " + randomSentence())
 #print("Score of a sentence: " + str(getSentencePerplexity("You will rejoice to hear that no disaster has accompanied", ngrams, 2)))
