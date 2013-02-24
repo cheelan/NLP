@@ -18,7 +18,9 @@ class Shell:
                 text+=inputFile.read()
                 inputFile.close()
         text = re.compile(r'<.*?>').sub('',text)
-        return text
+        for sentence in nltk.tokenize.sent_tokenize(text):
+            for word in (['<S>'] + nltk.tokenize.word_tokenize(sentence) + ['</S>']):
+                yield(word.lower())
 
     def create_unigram(self, args):
         print("Parsing and creating the unigram model...")

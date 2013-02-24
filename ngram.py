@@ -1,20 +1,68 @@
-from __future__ import with_statement
-import sys
-import itertools
-import nltk.data
-import copy
-import random
-from nltk.tokenize import WordPunctTokenizer
+import sys, itertools, copy, random, nltk.tokenize
 
 class Gram:
-    dictionary = None
     n = 0
-    word_count = 0
+    dictionary = None
+    unique_words = 0
+    count_list = [0]
+    smoothing_bound = 0
 
-    def __init__(self, args):
-        self.n = args
+    #n: number of grams (1 = unigram, 2 = bigram, etc.)
+    #text: a text corpus to model
+    #smoothingBound: smooth all words that appear less than the smoothingBound
+    #Returns a dictionary with keys that strings representing lists of words, and values that are counts
+    #TO-DO: Punctuation (find and replace should do the trick)
+    def __init__(self, n, text, smoothing_bound ):
+        self.n = n
         self.dictionary = {}
+        self.count_list*=(smoothing_bound+1)
+        unique_ngrams = 0
 
+        previous = list()   # Sentences are NOT independent of one another. 
+        word_generator = self.text_parse(text)
+        for word in word_generator:
+            #Maintain queue of n most recent words
+            previous.append(word)
+            if len(previous) < n:
+                continue
+            while len(previous) > n:
+                previous.pop(0)
+            # Updating the occurence counts
+            temp = copy.deepcopy(previous)
+            nthWord = temp.pop()
+            nMinusOneKey = str(temp)
+            if nMinusOneKey in self.dictionary:
+                miniDict = self.dictionary[nMinusOneKey] #Copy or pointer?
+                if nthWord in miniDict:
+                    miniDict[nthWord]+= 1
+                else:
+                    miniDict[nthWord] = 1
+                    self.unique_words+=1
+                    unique_ngrams+=1
+            else:
+                ngrams[nMinusOneKey] = {nthWord : 1}
+                unique_ngrams+=1
+            # Keeping track of counts in the countList
+            if (smoothingBound > 0):
+                count = ngrams[nMinusOneKey][nthWord]
+                if count > 1:
+                    self.count_list[count-1] -= 1
+                if count <= smoothingBound:
+                    self.count_list[count] += 1
+        self.count_list[0] = self.unique_words**n - unique_ngrams
+        self.applySmoothing()
+
+    #Applies Good-Turing smoothing to all ngrams in dict that appear less than bound times
+    #We might have to iterate over the whole dictionary. Yuck.
+    #Optimization could be to iterate before we fill with zeros - the dict will be much smaller
+    def applySmoothing(self):
+        for k in self.dictionary.keys():
+            for k2 in self.dictionary[k].keys():
+                count = self.dictionary[k][k2]
+                if count < self.smoothingBound:
+                    self.dictionary[k][k2] = (count + 1) * (float(self.count_list[count+1]) / float(self.count_list[count]))
+
+    '''
     def print_out(self):
         sorted_dictionary = sorted(self.dictionary.iteritems(), key= operator.itemgetter(1), reverse = True)
         print(sorted_dictionary[:100])
@@ -25,86 +73,47 @@ class Gram:
         else:
             self.word_count+=1
             self.dictionary[word] = 1
+    '''
 
-sentence = """STARTSEN You will rejoice to hear that no disaster has accompanied the
-commencement of an enterprise which you have regarded with such evil
-forebodings.ENDSEN STARTSEN  I arrived here yesterday, and my first task is to assure
-my dear sister of my welfare and increasing confidence in the success
-of my undertaking. ENDSEN"""
-
-#n: number of grams (1 = unigram, 2 = bigram, etc.)
-#text: a text corpus to model
-#smoothingBound: smooth all words that appear less than the smoothingBound
-#Returns a dictionary with keys that strings representing lists of words, and values that are counts
-#TO-DO: Punctuation (find and replace should do the trick)
-def ngram(n, text, smoothingBound ):
-    ngrams = dict()
-    previous = list()
-    totalCount = 0
-    countList = [0]*(smoothingBound + 1)
-    for sentence in nltk.tokenize.sent_tokenize(text):
-        for word in (['<S>'] + nltk.tokenize.word_tokenize(sentence) + ['</S>']):
-            #Change all words to lowercase
-            word = word.lower()
+    #text: regular text
+    #model: the n-gram model of choice
+    #n: the n in n-gram
+    #output: a score proportional to the probability of the sentence coming from that model
+    #Handling unknowns... hmmm
+    def getPerplexity(text):
+        p = 1.0
+        lst = list()
+        word_generator = parse_text(text)
+        for word in word_generator:
             #Maintain queue of n most recent words
-            previous.append(word)
-            if len(previous) < n:
+            lst.append(word)
+            if len(lst) < n:
                 continue
-            while len(previous) > n:
-                previous.pop(0)
-            totalCount+=1
-            temp = copy.deepcopy(previous)
-            nthWord = temp.pop()
-            nMinusOneKey = str(temp)
-            if nMinusOneKey in ngrams:
-                miniDict = ngrams[nMinusOneKey] #Copy or pointer?
-                if nthWord in miniDict:
-                    miniDict[nthWord] = miniDict.pop(nthWord) + 1
-                else:
-                    miniDict[nthWord] = 1
-            else:
-                ngrams[nMinusOneKey] = {nthWord : 1}
-            count = ngrams[nMinusOneKey][nthWord]
-            if count > 1:
-                countList[count-1] -= 1
-            if count <= smoothingBound:
-                countList[count] += 1
-    countList[0] = totalCount**n - len(ngrams)
-    applySmoothing(smoothingBound, ngrams, countList)
+            while len(lst) > n:
+                lst.pop(0)
 
-#sent: a regular sentence string, not delimited or anything
-#model: the n-gram model of choice
-#n: the n in n-gram
-#output: a score proportional to the probability of the sentence coming from that model
-#Handling unknowns... hmmm
-def getSentencePerplexity(sent, model, n):
-    p = 1.0
-    lst = list()
-    for w in WordPunctTokenizer().tokenize(sent):
-        w = w.lower()
-        lst.append(w)
-        if len(lst) < n:
-            continue
-        if len(lst) > n:
-            lst.pop(0)
-        nMinusOne = str(lst.pop())
-        key = str(lst)
-        #Need to adjust these for unknown words
-        if not (key in model):
-            return 0
-        if not (nMinusOne in model[key]):
-            p *= (float(countList[1]) / float(countList[0]))
-            continue
-        i = 0
-        sum = 0.
-        for v in model[key].values():
-            i += 1
-            sum += v
-        #TO-DO Let's double check that..
-        sum += float(totalCount - i) * (float(countList[1]) / float(countList[0])) 
-        p *= 1. / (float(model[key][nMinusOne]) / sum)
 
-    return p**(1. / float(len(sent)))
+
+
+
+            nMinusOne = str(lst.pop())
+            key = str(lst)
+            #Need to adjust these for unknown words
+            if not (key in model):
+                return 0
+            if not (nMinusOne in model[key]):
+                p *= (float(countList[1]) / float(countList[0]))
+                continue
+            i = 0
+            sum = 0.
+            for v in model[key].values():
+                i += 1
+                sum += v
+            #TO-DO Let's double check that..
+            sum += float(totalCount - i) * (float(countList[1]) / float(countList[0])) 
+            p *= 1. / (float(model[key][nMinusOne]) / sum)
+
+        return p**(1. / float(len(sent)))
 
         
         
@@ -155,16 +164,6 @@ def gtSmooth(ngram, smoothingBound):
     if count >= smoothingBound:
         return count
     return (count + 1) * (countList[count+1] / countList[count])
-
-#Applies Good-Turing smoothing to all ngrams in dict that appear less than bound times
-#We might have to iterate over the whole dictionary. Yuck.
-#Optimization could be to iterate before we fill with zeros - the dict will be much smaller
-def applySmoothing(smoothingBound, ngrams, countList):
-    for k in ngrams.keys():
-        for k2 in ngrams[k].keys():
-            count = ngrams[k][k2]
-            if count < smoothingBound:
-                ngrams[k][k2] = (count + 1) * (float(countList[count+1]) / float(countList[count]))
 
 def randomSentence():
     prev = "['startsen']"
