@@ -6,6 +6,25 @@ import copy
 import random
 from nltk.tokenize import WordPunctTokenizer
 
+class Gram:
+    dictionary = None
+    n = 0
+    word_count = 0
+
+    def __init__(self, args):
+        self.n = args
+        self.dictionary = {}
+
+    def print_out(self):
+        sorted_dictionary = sorted(self.dictionary.iteritems(), key= operator.itemgetter(1), reverse = True)
+        print(sorted_dictionary[:100])
+
+    def add(self, word):
+        if word in self.dictionary:
+            self.dictionary[word]+=1
+        else:
+            self.word_count+=1
+            self.dictionary[word] = 1
 
 sentence = """STARTSEN You will rejoice to hear that no disaster has accompanied the
 commencement of an enterprise which you have regarded with such evil
@@ -13,84 +32,52 @@ forebodings.ENDSEN STARTSEN  I arrived here yesterday, and my first task is to a
 my dear sister of my welfare and increasing confidence in the success
 of my undertaking. ENDSEN"""
 
-#sentence = "Startsen Apple at an apple an apple endsen"
-sentence2 = "That's just like, your opinion, man"
 unigrams = dict()
 ngrams = dict()
 totalCount = 0
 countList = []
 
-
-#Perhaps make an ngram object
-#Could be a list of the n words
-
-def unigram():
-    for w in sentence.split(" "):
-        if w in unigrams:
-            unigrams[w] = unigrams.pop(w) + 1
-        else:
-            unigrams[w] = 1
-'''
-def nltkTest():
-    text = """
-... Punkt knows that the periods in Mr. Smith and Johann S. Bach
-... do not mark sentence boundaries.  And sometimes sentences
-... can start with non-capitalized words.  i is a good variable
-... name.
-... """
-    sent_detector = nltk.data.load('tokenizers/punkt/english.pickle')
-    print '\n-----\n'.join(sent_detector.tokenize(text.strip()))
-'''
-
 #n: number of grams (1 = unigram, 2 = bigram, etc.)
-#words: a group of words to model
+#text: a text corpus to model
 #Returns a dictionary with keys that strings representing lists of words, and values that are counts
 #TO-DO: Punctuation (find and replace should do the trick)
-smoothingBound = 3 #Will eventually turn this into a param whenever I figure this out
-def ngram(n, words):
+def ngram(n, text, smoothingBound = 3):
     global totalCount
     global countList
     countList = [0]*(smoothingBound + 1)
     prev = list()
     vocab = dict()
-    for w in WordPunctTokenizer().tokenize(words):
-        #Convert everything to lowercase. Check that this is ok
-        w = w.lower()
-        #This happens to be a unigram
-        if w in vocab:
-            vocab[w] = vocab.pop(w) + 1
-        else:
-            vocab[w] = 1
-        #Mantain queue of n most recent words
-        if len(prev) >= n:
-            prev.pop(0)
-        #Look up n-1 words + current word in HT
-        prev.append(w)
-        if len(prev) < n:
-            continue
-        totalCount = totalCount + 1
-        temp = copy.deepcopy(prev)
-        nthWord = temp.pop()
-        nMinusOneKey = str(temp)
-        if nMinusOneKey in ngrams:
-            miniDict = ngrams[nMinusOneKey] #Copy or pointer?
-            if nthWord in miniDict:
-                miniDict[nthWord] = miniDict.pop(nthWord) + 1
+    for sentence in nltk.tokenize.sent_tokenize(text):
+        for w in WordPunctTokenizer().tokenize(text):
+        for word in nltk.tokenize.word_tokenize(i)
+            #Convert everything to lowercase. Check that this is ok
+            w = w.lower()
+            #Mantain queue of n most recent words
+            if len(prev) >= n:
+                prev.pop(0)
+            #Look up n-1 words + current word in HT
+            prev.append(w)
+            if len(prev) < n:
+                continue
+            totalCount = totalCount + 1
+            temp = copy.deepcopy(prev)
+            nthWord = temp.pop()
+            nMinusOneKey = str(temp)
+            if nMinusOneKey in ngrams:
+                miniDict = ngrams[nMinusOneKey] #Copy or pointer?
+                if nthWord in miniDict:
+                    miniDict[nthWord] = miniDict.pop(nthWord) + 1
+                else:
+                    miniDict[nthWord] = 1
             else:
-                miniDict[nthWord] = 1
-        else:
-            ngrams[nMinusOneKey] = {nthWord : 1}
-        count = ngrams[nMinusOneKey][nthWord]
-        if count > 1:
-            countList[count-1] -= 1
-        if count <= smoothingBound:
-            countList[count] += 1
+                ngrams[nMinusOneKey] = {nthWord : 1}
+            count = ngrams[nMinusOneKey][nthWord]
+            if count > 1:
+                countList[count-1] -= 1
+            if count <= smoothingBound:
+                countList[count] += 1
+
     countList[0] = totalCount**n - len(ngrams)
-    #print("---")
-    #print(countList)
-    #print("---")
-    #fillZeros(vocab, n)
-    #print(ngrams)
     applySmoothing(smoothingBound)
 
 #sent: a regular sentence string, not delimited or anything
