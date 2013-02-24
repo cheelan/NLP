@@ -12,6 +12,8 @@ commencement of an enterprise which you have regarded with such evil
 forebodings.ENDSEN STARTSEN  I arrived here yesterday, and my first task is to assure
 my dear sister of my welfare and increasing confidence in the success
 of my undertaking. ENDSEN"""
+
+#sentence = "Startsen Apple at an apple an apple endsen"
 sentence2 = "That's just like, your opinion, man"
 unigrams = dict()
 ngrams = dict()
@@ -183,8 +185,12 @@ def randomSentence():
         sum = float(0)
         rand = random.random()
         if prev in ngrams:
+            i = 0
             for v in ngrams[prev].values():
+                i += 1
                 sum += v
+            #sum += float(totalCount - i) * p
+                #TO-DO: Need to add in (total number of ngrams possible - ngrams seen) * prob(0 occurrences)
             print("COUNT: " + str(sum))
             runningSum = float(0)
             for (k,v) in ngrams[prev].iteritems():
@@ -197,6 +203,7 @@ def randomSentence():
                     sentence += " " + k
                     prev = "['" + k + "']"
                     break
+            #TO-DO: If this part is reached, then pick a random gram that appears 0 times
         else:
             print("Error: " + prev + " not in ngram model")
             break
@@ -210,6 +217,6 @@ print("Count 0: "+ str(getCount(ngrams, "['ate', 'apple']")))
 print("Random sentence: " + randomSentence())
 print("Score of a sentence: " + str(getSentenceScore("You will rejoice to hear that no disaster has accompanied", ngrams, 2)))
 #print(ngrams["[',']"])
-#print(str(ngrams))
-print(totalCount)
+print(str(ngrams))
+
 #nltkTest()
