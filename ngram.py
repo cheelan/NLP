@@ -1,14 +1,18 @@
 import sys, itertools, copy, random, nltk.tokenize
 
-'''
-sentence = "You will rejoice to hear that no disaster has accompanied the
+
+sentence = """You will rejoice to hear that no disaster has accompanied the
 commencement of an enterprise which you have regarded with such evil
 forebodings. I arrived here yesterday, and my first task is to assure
 my dear sister of my welfare and increasing confidence in the success
-of my undertaking."
+of my undertaking."""
+
+#sentence = "An apple an apple an apple an apple grape grape grape fruit."
+
+
 '''
 sentence = "Apple is an orange."
-
+'''
 
 class Gram:
     n = 0
@@ -40,6 +44,7 @@ class Gram:
             previous.append(word)
             if len(previous) < n:
                 continue
+            self.total_grams += 1
             while len(previous) > n:
                 previous.pop(0)
             # Updating the occurence counts
@@ -70,7 +75,7 @@ class Gram:
         self.count_list[0] = self.unique_words**n - unique_ngrams
         print("UNique_words: " + str(self.unique_words))
         print("UNique_grams: " + str(unique_ngrams))
-        #self.apply_smoothing()
+        self.apply_smoothing()
 
     #Applies Good-Turing smoothing to all ngrams in dict that appear less than bound times
     #We might have to iterate over the whole dictionary. Yuck.
@@ -108,22 +113,24 @@ class Gram:
             self.word_count+=1
             self.dictionary[word] = 1
     '''
-'''
+
     #text: regular text
     #model: the n-gram model of choice
     #n: the n in n-gram
     #output: a score proportional to the probability of the sentence coming from that model
     #Handling unknowns... hmmm
-    def getPerplexity(text):
+    def getPerplexity(self, text):
         p = 1.0
         lst = list()
-        word_generator = parse_text(text)
+        word_generator = self.text_parse(text)
+        length = 0
         for word in word_generator:
+            length += 1
             #Maintain queue of n most recent words
             lst.append(word) 
-            if len(lst) < n:
+            if len(lst) < self.n:
                 continue
-            while len(lst) > n:
+            while len(lst) > self.n:
                 lst.pop(0)
             nMinusOne = str(lst.pop())
             key = str(lst)
@@ -132,36 +139,31 @@ class Gram:
                 zero_count = float(self.count_list[1]) / float(self.count_list[0])
             else:
                 zero_count = 0
-
-            
             numerator = 0.
             denominator = 0.
 
-            if not (key in model):
+            if not (key in self.dictionary):
                 numerator = zero_count
-                denominator = 
-            elif key in model and (not (nMinusOne in model[key])):
-
-            elif key in model and nMinusOne in model[key]:
-             
-
-           
-
-            if not (key in model) or (not (nMinusOne in model[key])):
+                denominator = self.total_grams + (zero_count * count_list[0])
+            elif key in self.dictionary and (not (nMinusOne in self.dictionary[key])):
                 numerator = zero_count
-            else:
-                numerator = (float(model[key][nMinusOne]))
+                i = 0
+                for v in self.dictionary[key].values():
+                    i += 1
+                    denominator += v
+                denominator += float(self.unique_words - i) * zero_count
+            elif key in self.dictionary and nMinusOne in self.dictionary[key]:
+                i = 0
+                numerator = self.dictionary[key][nMinusOne]
+                for v in self.dictionary[key].values():
+                    i += 1
+                    denominator += v
+                denominator += float(self.unique_words - i) * zero_count
 
-            i = 0
-            summation = 0.
-            for v in model[key].values():
-                i += 1
-                summation += v
-            #TO-DO Let's double check that..
-            summation += float(totalCount - i) * (float(countList[1]) / float(countList[0])) 
-            p *= 1. / numerator / summation)
 
-        return p**(1. / float(len(sent)))   
+            p *= 1. / (numerator / denominator)
+
+        return p**(1. / float(length))   
         
 def fillZeros(vocab, n):
     for perm in itertools.product(vocab.keys(), repeat=n):
@@ -242,7 +244,7 @@ def randomSentence():
         else:
             print("Error: " + prev + " not in ngram model")
             break
-'''
+
 
 
 #ngram(int(sys.argv[1]), sentence)
@@ -252,7 +254,7 @@ print(test.dictionary)
 print(test.count_list)
 #print("Count 0: "+ str(getCount(ngrams, "['ate', 'apple']")))
 #print("Random sentence: " + randomSentence())
-#print("Score of a sentence: " + str(getSentencePerplexity("You will rejoice to hear that no disaster has accompanied", ngrams, 2)))
+print("Score of a sentence: " + str(test.getPerplexity("You will rejoice to hear that no disaster has accompanied")))
 #print(ngrams["[',']"])
 #print(str(ngrams))
 
