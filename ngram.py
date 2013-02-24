@@ -1,10 +1,10 @@
 import sys, itertools, copy, random, nltk.tokenize
 
-sentence = '''<S>You will rejoice to hear that no disaster has accompanied the
+sentence = '''You will rejoice to hear that no disaster has accompanied the
 commencement of an enterprise which you have regarded with such evil
-forebodings.</S><S>  I arrived here yesterday, and my first task is to assure
+forebodings. I arrived here yesterday, and my first task is to assure
 my dear sister of my welfare and increasing confidence in the success
-of my undertaking.</S>'''
+of my undertaking.'''
 
 class Gram:
     n = 0
