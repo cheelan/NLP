@@ -18,6 +18,7 @@ sentence2 = "That's just like, your opinion, man"
 unigrams = dict()
 ngrams = dict()
 totalCount = 0
+countList = []
 
 
 #Perhaps make an ngram object
@@ -48,6 +49,7 @@ def nltkTest():
 smoothingBound = 3 #Will eventually turn this into a param whenever I figure this out
 def ngram(n, words):
     global totalCount
+    global countList
     countList = [0]*(smoothingBound + 1)
     prev = list()
     vocab = dict()
@@ -87,16 +89,16 @@ def ngram(n, words):
     #print("---")
     #print(countList)
     #print("---")
-    fillZeros(vocab, n)
+    #fillZeros(vocab, n)
     #print(ngrams)
-    applySmoothing(countList, smoothingBound)
+    applySmoothing(smoothingBound)
 
 #sent: a regular sentence string, not delimited or anything
 #model: the n-gram model of choice
 #n: the n in n-gram
 #output: a score proportional to the probability of the sentence coming from that model
 #Handling unknowns... hmmm
-def getSentenceScore(sent, model, n):
+def getSentencePerplexity(sent, model, n):
     p = 1.0
     lst = list()
     for w in WordPunctTokenizer().tokenize(sent):
@@ -112,9 +114,18 @@ def getSentenceScore(sent, model, n):
         if not (key in model):
             return 0
         if not (nMinusOne in model[key]):
-            return 0
-        p += model[key][nMinusOne]
-    return p
+            p *= (float(countList[1]) / float(countList[0]))
+            continue
+        i = 0
+        sum = 0.
+        for v in model[key].values():
+            i += 1
+            sum += v
+        #TO-DO Let's double check that..
+        sum += float(totalCount - i) * (float(countList[1]) / float(countList[0])) 
+        p *= 1. / (float(model[key][nMinusOne]) / sum)
+
+    return p**(1. / float(len(sent)))
 
         
         
@@ -158,7 +169,7 @@ def getCount(dict, ngram):
     return 0
 
 #Currently not used
-def gtSmooth(countList, ngram, smoothingBound):
+def gtSmooth(ngram, smoothingBound):
     count = 0
     if ngram in ngrams:
         count = ngrams[ngram]
@@ -169,7 +180,7 @@ def gtSmooth(countList, ngram, smoothingBound):
 #Applies Good-Turing smoothing to all ngrams in dict that appear less than bound times
 #We might have to iterate over the whole dictionary. Yuck.
 #Optimization could be to iterate before we fill with zeros - the dict will be much smaller
-def applySmoothing(countList, smoothingBound):
+def applySmoothing(smoothingBound):
     for k in ngrams.keys():
         for k2 in ngrams[k].keys():
             count = ngrams[k][k2]
@@ -214,9 +225,9 @@ def randomSentence():
 
 ngram(2, sentence)
 print("Count 0: "+ str(getCount(ngrams, "['ate', 'apple']")))
-print("Random sentence: " + randomSentence())
-print("Score of a sentence: " + str(getSentenceScore("You will rejoice to hear that no disaster has accompanied", ngrams, 2)))
+#print("Random sentence: " + randomSentence())
+print("Score of a sentence: " + str(getSentencePerplexity("You will rejoice to hear that no disaster has accompanied", ngrams, 2)))
 #print(ngrams["[',']"])
-print(str(ngrams))
+#print(str(ngrams))
 
 #nltkTest()
