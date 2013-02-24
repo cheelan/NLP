@@ -19,10 +19,11 @@ class Gram:
     #smoothingBound: smooth all words that appear less than the smoothingBound
     #Returns a dictionary with keys that strings representing lists of words, and values that are counts
     #TO-DO: Punctuation (find and replace should do the trick)
-    def __init__(self, n, text, smoothing_bound ):
+    def __init__(self, n, text, smoothingBound ):
         self.n = n
         self.dictionary = {}
-        self.count_list*=(smoothing_bound+1)
+        self.smoothing_bound = smoothingBound + 1
+        self.count_list*=(self.smoothing_bound)
         unique_ngrams = 0
 
         previous = list()   # Sentences are NOT independent of one another. 
@@ -47,27 +48,41 @@ class Gram:
                     self.unique_words+=1
                     unique_ngrams+=1
             else:
-                ngrams[nMinusOneKey] = {nthWord : 1}
+                self.dictionary[nMinusOneKey] = {nthWord : 1}
                 unique_ngrams+=1
             # Keeping track of counts in the countList
-            if (smoothingBound > 0):
-                count = ngrams[nMinusOneKey][nthWord]
+            if (self.smoothing_bound > 0):
+                count = self.dictionary[nMinusOneKey][nthWord]
                 if count > 1:
                     self.count_list[count-1] -= 1
-                if count <= smoothingBound:
+                if count <= self.smoothing_bound:
                     self.count_list[count] += 1
         self.count_list[0] = self.unique_words**n - unique_ngrams
-        self.applySmoothing()
+        self.apply_smoothing()
 
     #Applies Good-Turing smoothing to all ngrams in dict that appear less than bound times
     #We might have to iterate over the whole dictionary. Yuck.
     #Optimization could be to iterate before we fill with zeros - the dict will be much smaller
-    def applySmoothing(self):
+    def apply_smoothing(self):
         for k in self.dictionary.keys():
             for k2 in self.dictionary[k].keys():
                 count = self.dictionary[k][k2]
-                if count < self.smoothingBound:
+                if count < self.smoothing_bound:
                     self.dictionary[k][k2] = (count + 1) * (float(self.count_list[count+1]) / float(self.count_list[count]))
+
+    # Parses the text by removing the HTML tags and creates a generator of the words in the text.
+    def text_parse(self, text):
+        '''
+        for fname in os.listdir(os.getcwd()):
+            if fname.endswith(".train"):
+                inputFile = open(fname,'r')
+                text+=inputFile.read()
+                inputFile.close()
+        text = re.compile(r'<.*?>').sub('',text)
+        '''
+        for sentence in nltk.tokenize.sent_tokenize(text):
+            for word in (['<S>'] + nltk.tokenize.word_tokenize(sentence) + ['</S>']):
+                yield(word.lower())
 
     '''
     def print_out(self):
@@ -134,9 +149,7 @@ class Gram:
             summation += float(totalCount - i) * (float(countList[1]) / float(countList[0])) 
             p *= 1. / numerator / summation)
 
-        return p**(1. / float(len(sent)))
-'''
-        
+        return p**(1. / float(len(sent)))   
         
 def fillZeros(vocab, n):
     for perm in itertools.product(vocab.keys(), repeat=n):
@@ -217,7 +230,7 @@ def randomSentence():
         else:
             print("Error: " + prev + " not in ngram model")
             break
-
+'''
 
 
 #ngram(int(sys.argv[1]), sentence)
