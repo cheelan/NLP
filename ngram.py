@@ -86,23 +86,21 @@ class Gram:
         word_generator = parse_text(text)
         for word in word_generator:
             #Maintain queue of n most recent words
-            lst.append(word)
+            lst.append(word) 
             if len(lst) < n:
                 continue
             while len(lst) > n:
                 lst.pop(0)
-
-
-
-
-
             nMinusOne = str(lst.pop())
             key = str(lst)
             #Need to adjust these for unknown words
+            zero_count = (self.smoothing_bound > 0 ? float(countList[1]) / float(countList[0]) : 0)
+
+
             if not (key in model):
-                return 0
+                return zero_count
             if not (nMinusOne in model[key]):
-                p *= (float(countList[1]) / float(countList[0]))
+                p *= zero_count
                 continue
             i = 0
             sum = 0.
