@@ -1,4 +1,4 @@
-import sys, itertools, copy, random, nltk.tokenize, os, re
+import sys, itertools, copy, random, nltk.tokenize, os, re, math
 
 '''
 sentence = """You will rejoice to hear that no disaster has accompanied the
@@ -27,7 +27,7 @@ class Gram:
         self.n = n
         self.dictionary = {}
         self.smoothing_bound = smoothingBound
-        self.count_list*=(self.smoothing_bound + 1)
+        self.count_list= [0]*(self.smoothing_bound + 1)
         unique_ngrams = 0
         vocab = set()
 
@@ -105,53 +105,46 @@ class Gram:
         lst = list()
         word_generator = self.text_parse(text)
         length = 0
-        try:
-            for word in word_generator:
-                length += 1
-                #Maintain queue of n most recent words
-                lst.append(word) 
-                if len(lst) < self.n:
-                    continue
-                while len(lst) > self.n:
-                    lst.pop(0)
-                temp = copy.deepcopy(lst)
-                nMinusOne = str(temp.pop())
-                key = str(temp)
-                #Need to adjust these for unknown words
-                if self.smoothing_bound > 0:
-                    zero_count = float(self.count_list[1]) / float(self.count_list[0])
-                else:
-                    zero_count = 0
-                numerator = 0.
-                denominator = 0.
+        for word in word_generator:
+            length += 1
+            #Maintain queue of n most recent words
+            lst.append(word) 
+            if len(lst) < self.n:
+                continue
+            while len(lst) > self.n:
+                lst.pop(0)
+            temp = copy.deepcopy(lst)
+            nMinusOne = str(temp.pop())
+            key = str(temp)
+            #Need to adjust these for unknown words
+            if self.smoothing_bound > 0:
+                zero_count = float(self.count_list[1]) / float(self.count_list[0])
+            else:
+                zero_count = 0
+            numerator = 0.
+            denominator = 0.
 
-                if not (key in self.dictionary):
-                    numerator = zero_count
-                    denominator = self.total_grams + (zero_count * self.count_list[0])
-                elif key in self.dictionary and (not (nMinusOne in self.dictionary[key])):
-                    numerator = zero_count
-                    i = 0
-                    for v in self.dictionary[key].values():
-                        i += 1
-                        denominator += v
-                    denominator += float(self.unique_words - i) * zero_count
-                elif key in self.dictionary and nMinusOne in self.dictionary[key]:
-                    i = 0
-                    numerator = self.dictionary[key][nMinusOne]
-                    for v in self.dictionary[key].values():
-                        i += 1
-                        denominator += v
-                    denominator += float(self.unique_words - i) * zero_count
-                """
-                if denominator == 0.:
-                    denominator = float('inf');
-                if numerator == 0:
-                    p = float('inf')
-                """
-                p *= 1. / (numerator / denominator)
-        except:  
-            return float('inf')
-        return p**(1. / float(length))   
+            if not (key in self.dictionary):
+                numerator = zero_count
+                denominator = self.total_grams + (zero_count * self.count_list[0])
+            elif key in self.dictionary and (not (nMinusOne in self.dictionary[key])):
+                numerator = zero_count
+                i = 0
+                for v in self.dictionary[key].values():
+                    i += 1
+                    denominator += v
+                denominator += float(self.unique_words - i) * zero_count
+            elif key in self.dictionary and nMinusOne in self.dictionary[key]:
+                i = 0
+                numerator = self.dictionary[key][nMinusOne]
+                for v in self.dictionary[key].values():
+                    i += 1
+                    denominator += v
+                denominator += float(self.unique_words - i) * zero_count
+            else:
+                print("Hit a spot where it should never go.")
+            p += math.log10(denominator / numerator)
+        return (p**10)**(1. / float(length))   
 
     def randomSentence(self):
         prev = "['<s>']"

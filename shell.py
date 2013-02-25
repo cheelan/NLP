@@ -74,8 +74,11 @@ class Shell:
         #Comparing our determination with the validation set.
         right = 0
         wrong = 0
+        answer_file = open("answer_file.txt", 'w')
         for (ans, unknown) in validationList:
-            if ans == self.guess(3, unknown, bigrams):
+            prediction = self.guess(3, unknown, bigrams)
+            answer_file.write(prediction + '\n')
+            if ans == prediction:
                 right += 1
             else:
                 wrong += 1
