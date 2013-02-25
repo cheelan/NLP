@@ -228,17 +228,23 @@ class Gram:
             else:
                 return "Error: " + prev + " not in ngram model"
       
-def authorTrainPreprocess(smoothingBound, unknown):
-    #load the train file
+def authorTrainPreprocess(smoothingBound, unknown, bigrams):
+   
+    bestAuthor = ""
+    bestScore = float('inf')
+    for (a, b) in bigrams:
+        perp = b.getPerplexity(unknown)
+        if perp < bestScore:
+            bestAuthor = a
+            bestScore = perp
+    return bestAuthor
+
+def authorPredictionValidation(smoothingBound):
+     #load the train file
     authorDictionary = dict()
     with open("train.txt") as f:
         content = f.readlines()
-    i = 0
     for line in content:
-        #i += 1
-        #if i == 10:
-        #    break
-        #author = re.compile(r'^\S+').match(line)
         m = re.match(r"^\S+", line)
         author = m.group(0)
         rest = (re.compile(r'^\S+').sub('',line)).strip()
@@ -247,21 +253,31 @@ def authorTrainPreprocess(smoothingBound, unknown):
         else:
             authorDictionary[author] = rest
 
-
     bigrams = list()
     for (k, v) in authorDictionary.iteritems():
         b = Gram(2, v, smoothingBound)
         bigrams.append((k, b))
-    for (a, b) in bigrams:
-        print(a + ": " + str(b.getPerplexity(unknown)))
-    #print(authorDictionary["beck-s"])
 
-        #print("Author: " + author + "Text: " + rest)
-
-    #For each line in the train file
-    #Check the author
-    #Append the text to the dictionary
-    pass
+     #load the validation file
+    validationDictionary = dict()
+    with open("validation.txt") as f:
+        content = f.readlines()
+    for line in content:
+        m = re.match(r"^\S+", line)
+        author = m.group(0)
+        rest = (re.compile(r'^\S+').sub('',line)).strip()
+        if author in validationDictionary:
+            validationDictionary[author] += " " + rest
+        else:
+            validationDictionary[author] = rest
+    right = 0
+    wrong = 0
+    for (ans, unknown) in validationDictionary.iteritems():
+        if ans == authorTrainPreprocess(3, unknown, bigrams):
+            right += 1
+        else:
+            wrong += 1
+    print("Accuracy: " + str(float(right) / (right + wrong)))
 def authorPrediction():
     pass
     
@@ -326,7 +342,7 @@ def gtSmooth(ngram, smoothingBound):
 #print("Count 0: "+ str(getCount(ngrams, "['ate', 'apple']")))
 #print("Random sentence: " + test.randomSentence())
 #print("Score of a sentence: " + str(test.getPerplexity("You will rejoice to hear that no disaster has accompanied")))
-authorTrainPreprocess(3, "The expected volume on the subject deal has been changed effective 3/28/01:  Meter #  Trade Zone Counterparty  From To  9658  16  KCS Resources  6,500 5,700  Bob")
+print(str(authorPredictionValidation(3)))
 #print("Score of a sentence: " + str(test.getPerplexity("the bank cars.")))
 #print(ngrams["[',']"])
 #print(str(ngrams))
