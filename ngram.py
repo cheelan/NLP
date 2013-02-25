@@ -1,4 +1,4 @@
-import sys, itertools, copy, random, nltk.tokenize
+import sys, itertools, copy, random, nltk.tokenize, os, re
 
 
 sentence = """You will rejoice to hear that no disaster has accompanied the
@@ -91,14 +91,14 @@ class Gram:
 
     # Parses the text by removing the HTML tags and creates a generator of the words in the text.
     def text_parse(self, text):
-        '''
-        for fname in os.listdir(os.getcwd()):
-            if fname.endswith(".train"):
-                inputFile = open(fname,'r')
-                text+=inputFile.read()
-                inputFile.close()
-        text = re.compile(r'<.*?>').sub('',text)
-        '''
+        if text == "NONE":
+            for fname in os.listdir(os.getcwd()):
+                if fname.endswith(".train"):
+                    inputFile = open(fname,'r')
+                    text+=inputFile.read()
+                    inputFile.close()
+            text = re.compile(r'<.*?>').sub('',text)
+        
         for sentence in nltk.tokenize.sent_tokenize(text):
             for word in (['<S>'] + nltk.tokenize.word_tokenize(sentence) + ['</S>']):
                 yield(word.lower())
@@ -283,9 +283,10 @@ def gtSmooth(ngram, smoothingBound):
 
 #ngram(int(sys.argv[1]), sentence)
 
-test = Gram(1, sentence, 0)
-print(test.dictionary)
-print(test.count_list)
+#test = Gram(1, sentence, 0)
+test = Gram(2, "NONE", 3)
+#print(test.dictionary)
+#print(test.count_list)
 #print("Count 0: "+ str(getCount(ngrams, "['ate', 'apple']")))
 print("Random sentence: " + test.randomSentence())
 #print("Score of a sentence: " + str(test.getPerplexity("You will rejoice to hear that no disaster has accompanied")))
