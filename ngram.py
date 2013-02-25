@@ -8,7 +8,7 @@ my dear sister of my welfare and increasing confidence in the success
 of my undertaking."""
 
 sentence = "I went to the bank. The bank had a lot of people. The people had a lot of money. The people went to the cars."
-#sentence = "An apple an apple an apple an apple grape grape grape fruit.
+#sentence = "I am."
 
 
 '''
@@ -76,7 +76,8 @@ class Gram:
         self.count_list[0] = self.unique_words**n - unique_ngrams
         print("UNique_words: " + str(self.unique_words))
         print("UNique_grams: " + str(unique_ngrams))
-        self.apply_smoothing()
+        if (self.smoothing_bound > 0):
+            self.apply_smoothing()
 
     #Applies Good-Turing smoothing to all ngrams in dict that appear less than bound times
     #We might have to iterate over the whole dictionary. Yuck.
@@ -125,45 +126,52 @@ class Gram:
         lst = list()
         word_generator = self.text_parse(text)
         length = 0
-        for word in word_generator:
-            length += 1
-            #Maintain queue of n most recent words
-            lst.append(word) 
-            if len(lst) < self.n:
-                continue
-            while len(lst) > self.n:
-                lst.pop(0)
-            nMinusOne = str(lst.pop())
-            key = str(lst)
-            #Need to adjust these for unknown words
-            if self.smoothing_bound > 0:
-                zero_count = float(self.count_list[1]) / float(self.count_list[0])
-            else:
-                zero_count = 0
-            numerator = 0.
-            denominator = 0.
+        try:
+            for word in word_generator:
+                length += 1
+                #Maintain queue of n most recent words
+                lst.append(word) 
+                if len(lst) < self.n:
+                    continue
+                while len(lst) > self.n:
+                    lst.pop(0)
+                temp = copy.deepcopy(lst)
+                nMinusOne = str(temp.pop())
+                key = str(temp)
+                #Need to adjust these for unknown words
+                if self.smoothing_bound > 0:
+                    zero_count = float(self.count_list[1]) / float(self.count_list[0])
+                else:
+                    zero_count = 0
+                numerator = 0.
+                denominator = 0.
 
-            if not (key in self.dictionary):
-                numerator = zero_count
-                denominator = self.total_grams + (zero_count * count_list[0])
-            elif key in self.dictionary and (not (nMinusOne in self.dictionary[key])):
-                numerator = zero_count
-                i = 0
-                for v in self.dictionary[key].values():
-                    i += 1
-                    denominator += v
-                denominator += float(self.unique_words - i) * zero_count
-            elif key in self.dictionary and nMinusOne in self.dictionary[key]:
-                i = 0
-                numerator = self.dictionary[key][nMinusOne]
-                for v in self.dictionary[key].values():
-                    i += 1
-                    denominator += v
-                denominator += float(self.unique_words - i) * zero_count
-
-
-            p *= 1. / (numerator / denominator)
-
+                if not (key in self.dictionary):
+                    numerator = zero_count
+                    denominator = self.total_grams + (zero_count * self.count_list[0])
+                elif key in self.dictionary and (not (nMinusOne in self.dictionary[key])):
+                    numerator = zero_count
+                    i = 0
+                    for v in self.dictionary[key].values():
+                        i += 1
+                        denominator += v
+                    denominator += float(self.unique_words - i) * zero_count
+                elif key in self.dictionary and nMinusOne in self.dictionary[key]:
+                    i = 0
+                    numerator = self.dictionary[key][nMinusOne]
+                    for v in self.dictionary[key].values():
+                        i += 1
+                        denominator += v
+                    denominator += float(self.unique_words - i) * zero_count
+                """
+                if denominator == 0.:
+                    denominator = float('inf');
+                if numerator == 0:
+                    p = float('inf')
+                """
+                p *= 1. / (numerator / denominator)
+        except:  
+            return float('inf')
         return p**(1. / float(length))   
         
 def fillZeros(vocab, n):
@@ -255,9 +263,9 @@ print(test.dictionary)
 print(test.count_list)
 #print("Count 0: "+ str(getCount(ngrams, "['ate', 'apple']")))
 #print("Random sentence: " + randomSentence())
-print("Score of a sentence: " + str(test.getPerplexity("You will rejoice to hear that no disaster has accompanied")))
+#print("Score of a sentence: " + str(test.getPerplexity("You will rejoice to hear that no disaster has accompanied")))
 
-print("Score of a sentence: " + str(test.getPerplexity("The bank cars.")))
+print("Score of a sentence: " + str(test.getPerplexity("the bank cars.")))
 #print(ngrams["[',']"])
 #print(str(ngrams))
 
