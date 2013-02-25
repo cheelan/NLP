@@ -144,7 +144,7 @@ class Gram:
             else:
                 print("Hit a spot where it should never go.")
             p += math.log10(denominator / numerator)
-        return (p**10)**(1. / float(length))   
+        return 10**(p * (1. / float(length)))   
 
     def randomSentence(self):
         prev = "['<s>']"
