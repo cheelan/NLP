@@ -173,6 +173,61 @@ class Gram:
         except:  
             return float('inf')
         return p**(1. / float(length))   
+
+    def randomSentence(self):
+        prev = "['<s>']"
+        sentence = ""
+        if self.smoothing_bound > 0:
+            zero_count = float(self.count_list[1]) / float(self.count_list[0])
+        else:
+            zero_count = 0
+        if self.n == 1:
+            while True:
+                rand = random.random()
+                
+                runningSum = 0.
+                for (k,v) in self.dictionary['[]'].iteritems():
+                    runningSum += float(v) / (self.total_grams)
+                    if (runningSum >= rand):
+                        if k == "<s>":
+                            break
+                        if k == "</s>":
+                            return sentence
+                        sentence += " " + k
+                        break
+        elif self.n > 2:
+            print("ERROR: Random sentences does not work on n grams where n > 2")
+            return ""
+
+        #Import bigram table if it exists
+        #Otherwise generate one
+        while True:
+            sum = float(0)
+            rand = random.random()
+            if prev in self.dictionary:
+                i = 0
+                for v in self.dictionary[prev].values():
+                    i += 1
+                    sum += v
+                sum += float(self.unique_words - i) * zero_count
+                    #sum += float(totalCount - i) * p
+                    #TO-DO: Need to add in (total number of ngrams possible - ngrams seen) * prob(0 occurrences)
+            
+                runningSum = float(0)
+                for (k,v) in self.dictionary[prev].iteritems():
+                    runningSum += v / sum
+                    if (runningSum >= rand):
+                        if k == "<s>":
+                            break
+                        if k == "</s>":
+                            return sentence
+                        sentence += " " + k
+                        prev = "['" + k + "']"
+                        break
+                #TO-DO: If this part is reached, then pick a random gram that appears 0 times
+            else:
+                return "Error: " + prev + " not in ngram model"
+                
         
 def fillZeros(vocab, n):
     for perm in itertools.product(vocab.keys(), repeat=n):
@@ -222,47 +277,17 @@ def gtSmooth(ngram, smoothingBound):
         return count
     return (count + 1) * (countList[count+1] / countList[count])
 
-def randomSentence():
-    prev = "['startsen']"
-    sentence = ""
-    #Import bigram table if it exists
-    #Otherwise generate one
-    while True:
-        sum = float(0)
-        rand = random.random()
-        if prev in ngrams:
-            i = 0
-            for v in ngrams[prev].values():
-                i += 1
-                sum += v
-            #sum += float(totalCount - i) * p
-                #TO-DO: Need to add in (total number of ngrams possible - ngrams seen) * prob(0 occurrences)
-            print("COUNT: " + str(sum))
-            runningSum = float(0)
-            for (k,v) in ngrams[prev].iteritems():
-                runningSum += v / sum
-                if (runningSum >= rand):
-                    if k == "startsen":
-                        break
-                    if k == "endsen":
-                        return sentence
-                    sentence += " " + k
-                    prev = "['" + k + "']"
-                    break
-            #TO-DO: If this part is reached, then pick a random gram that appears 0 times
-        else:
-            print("Error: " + prev + " not in ngram model")
-            break
+
 
 
 
 #ngram(int(sys.argv[1]), sentence)
 
-test = Gram(2, sentence, 2)
+test = Gram(1, sentence, 0)
 print(test.dictionary)
 print(test.count_list)
 #print("Count 0: "+ str(getCount(ngrams, "['ate', 'apple']")))
-#print("Random sentence: " + randomSentence())
+print("Random sentence: " + test.randomSentence())
 #print("Score of a sentence: " + str(test.getPerplexity("You will rejoice to hear that no disaster has accompanied")))
 
 print("Score of a sentence: " + str(test.getPerplexity("the bank cars.")))
