@@ -227,8 +227,44 @@ class Gram:
                 #TO-DO: If this part is reached, then pick a random gram that appears 0 times
             else:
                 return "Error: " + prev + " not in ngram model"
-                
-        
+      
+def authorTrainPreprocess(smoothingBound, unknown):
+    #load the train file
+    authorDictionary = dict()
+    with open("train.txt") as f:
+        content = f.readlines()
+    i = 0
+    for line in content:
+        #i += 1
+        #if i == 10:
+        #    break
+        #author = re.compile(r'^\S+').match(line)
+        m = re.match(r"^\S+", line)
+        author = m.group(0)
+        rest = (re.compile(r'^\S+').sub('',line)).strip()
+        if author in authorDictionary:
+            authorDictionary[author] += " " + rest
+        else:
+            authorDictionary[author] = rest
+
+
+    bigrams = list()
+    for (k, v) in authorDictionary.iteritems():
+        b = Gram(2, v, smoothingBound)
+        bigrams.append((k, b))
+    for (a, b) in bigrams:
+        print(a + ": " + str(b.getPerplexity(unknown)))
+    #print(authorDictionary["beck-s"])
+
+        #print("Author: " + author + "Text: " + rest)
+
+    #For each line in the train file
+    #Check the author
+    #Append the text to the dictionary
+    pass
+def authorPrediction():
+    pass
+    
 def fillZeros(vocab, n):
     for perm in itertools.product(vocab.keys(), repeat=n):
         key = list()
@@ -284,14 +320,14 @@ def gtSmooth(ngram, smoothingBound):
 #ngram(int(sys.argv[1]), sentence)
 
 #test = Gram(1, sentence, 0)
-test = Gram(2, "NONE", 3)
+#test = Gram(2, "NONE", 3)
 #print(test.dictionary)
 #print(test.count_list)
 #print("Count 0: "+ str(getCount(ngrams, "['ate', 'apple']")))
-print("Random sentence: " + test.randomSentence())
+#print("Random sentence: " + test.randomSentence())
 #print("Score of a sentence: " + str(test.getPerplexity("You will rejoice to hear that no disaster has accompanied")))
-
-print("Score of a sentence: " + str(test.getPerplexity("the bank cars.")))
+authorTrainPreprocess(3, "The expected volume on the subject deal has been changed effective 3/28/01:  Meter #  Trade Zone Counterparty  From To  9658  16  KCS Resources  6,500 5,700  Bob")
+#print("Score of a sentence: " + str(test.getPerplexity("the bank cars.")))
 #print(ngrams["[',']"])
 #print(str(ngrams))
 
