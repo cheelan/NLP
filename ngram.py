@@ -1,6 +1,6 @@
 import sys, itertools, copy, random, nltk.tokenize, os, re
 
-
+'''
 sentence = """You will rejoice to hear that no disaster has accompanied the
 commencement of an enterprise which you have regarded with such evil
 forebodings. I arrived here yesterday, and my first task is to assure
@@ -8,11 +8,6 @@ my dear sister of my welfare and increasing confidence in the success
 of my undertaking."""
 
 sentence = "I went to the bank. The bank had a lot of people. The people had a lot of money. The people went to the cars."
-#sentence = "I am."
-
-
-'''
-sentence = "Apple is an orange."
 '''
 
 class Gram:
@@ -35,7 +30,6 @@ class Gram:
         self.count_list*=(self.smoothing_bound + 1)
         unique_ngrams = 0
         vocab = set()
-
 
         previous = list()   # Sentences are NOT independent of one another. 
         word_generator = self.text_parse(text)
@@ -71,7 +65,6 @@ class Gram:
                 if count <= self.smoothing_bound:
                     self.count_list[count] += 1
 
-
         self.unique_words = len(vocab)
         self.count_list[0] = self.unique_words**n - unique_ngrams
         print("UNique_words: " + str(self.unique_words))
@@ -98,23 +91,9 @@ class Gram:
                     text+=inputFile.read()
                     inputFile.close()
             text = re.compile(r'<.*?>').sub('',text)
-        
         for sentence in nltk.tokenize.sent_tokenize(text):
             for word in (['<S>'] + nltk.tokenize.word_tokenize(sentence) + ['</S>']):
                 yield(word.lower())
-
-    '''
-    def print_out(self):
-        sorted_dictionary = sorted(self.dictionary.iteritems(), key= operator.itemgetter(1), reverse = True)
-        print(sorted_dictionary[:100])
-
-    def add(self, word):
-        if word in self.dictionary:
-            self.dictionary[word]+=1
-        else:
-            self.word_count+=1
-            self.dictionary[word] = 1
-    '''
 
     #text: regular text
     #model: the n-gram model of choice
@@ -184,7 +163,6 @@ class Gram:
         if self.n == 1:
             while True:
                 rand = random.random()
-                
                 runningSum = 0.
                 for (k,v) in self.dictionary['[]'].iteritems():
                     runningSum += float(v) / (self.total_grams)
@@ -198,7 +176,6 @@ class Gram:
         elif self.n > 2:
             print("ERROR: Random sentences does not work on n grams where n > 2")
             return ""
-
         #Import bigram table if it exists
         #Otherwise generate one
         while True:
@@ -227,9 +204,9 @@ class Gram:
                 #TO-DO: If this part is reached, then pick a random gram that appears 0 times
             else:
                 return "Error: " + prev + " not in ngram model"
-      
+
+'''      
 def authorTrainPreprocess(smoothingBound, unknown, bigrams):
-   
     bestAuthor = ""
     bestScore = float('inf')
     for (a, b) in bigrams:
@@ -277,9 +254,10 @@ def authorPredictionValidation(smoothingBound):
     print("Right: " + str(right))
     print("Wrong: " + str(wrong))
     print("Accuracy: " + str(float(right) / (right + wrong)))
+
 def authorPrediction():
     pass
-    
+
 def fillZeros(vocab, n):
     for perm in itertools.product(vocab.keys(), repeat=n):
         key = list()
@@ -327,6 +305,7 @@ def gtSmooth(ngram, smoothingBound):
     if count >= smoothingBound:
         return count
     return (count + 1) * (countList[count+1] / countList[count])
+'''
 
 
 
@@ -341,7 +320,7 @@ def gtSmooth(ngram, smoothingBound):
 #print("Count 0: "+ str(getCount(ngrams, "['ate', 'apple']")))
 #print("Random sentence: " + test.randomSentence())
 #print("Score of a sentence: " + str(test.getPerplexity("You will rejoice to hear that no disaster has accompanied")))
-print(str(authorPredictionValidation(3)))
+#print(str(authorPredictionValidation(3)))
 #print("Score of a sentence: " + str(test.getPerplexity("the bank cars.")))
 #print(ngrams["[',']"])
 #print(str(ngrams))

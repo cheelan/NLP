@@ -1,4 +1,5 @@
 import os, pickle, anydbm, time, nltk.tokenize, operator, re
+from ngram import *
 
 class Shell:
     unigram = None
@@ -7,26 +8,13 @@ class Shell:
 
     def __init__(self):
         print("For a list of commands, type \"help\"")
-        self.unigram = Gram(1)
-        self.bigram = Gram(2)
 
-    def create_unigram(self, args):
-        print("Parsing and creating the unigram model...")
-        text = self.text_parse()
-        sentences = nltk.tokenize.sent_tokenize(text)
-        for i in sentences:
-            self.unigram.add('<S>')
-            for word in nltk.tokenize.word_tokenize(i):
-                self.unigram.add(word.lower())
-            self.unigram.add('</S>')
-        self.unigram.print_out()
-
-    def create_bigram(self, args):
-        self.bigram = self.create_ngram(2)
-
-    def create_ngram(self, args):
-        pass
-
+    # Training of the various ngram models. 
+    # Constructor: n, smoothing bound
+    def train(self, args):
+        self.unigram = Gram(1, None, int(args[2]))
+        self.bigram = Gram(2, None, int(args[2]))
+        self.ngram = Gram(int(args[1]), None, int(args[2]))
 
     def import_data(self, args):
         data = anydbm.open('data.log', 'r')
@@ -40,11 +28,60 @@ class Shell:
         data['bigram'] = pickle.dumps(self.bigram)
         data['ngram'] = pickle.dumps(self.ngram)
 
-    def help(self,args):
-        print("The follow are valid commands:\nimport_data\nexport_data\ntrain\ntest\nhelp\nexit")
+    def help(self, args):
+        print("The follow are valid commands:\nimport_data\nexport_data\ntrain\nhelp\nexit")
 
-    def generate_random(self,args):
+    def generate_random(self, args):
         pass
+
+    def guess(self, smoothingBound, unknown, bigrams):
+        bestAuthor = ""
+        bestScore = float('inf')
+        for (a, b) in bigrams:
+            perp = b.getPerplexity(unknown)
+            if perp < bestScore:
+                bestAuthor = a
+                bestScore = perp
+        return bestAuthor
+
+    def author_prediction(self, args):
+        smoothingBound = int(args[1])
+        #load the train and parse it according to the author
+        authorDictionary = dict()
+        content = open("train.txt").readlines()
+        for line in content:
+            m = re.match(r"^\S+", line)
+            author = m.group(0)
+            email = (re.compile(r'^\S+').sub('',line)).strip()
+            if author in authorDictionary:
+                authorDictionary[author] += " " + email
+            else:
+                authorDictionary[author] = email
+        bigrams = list()
+        for (k, v) in authorDictionary.iteritems():
+            b = Gram(2, v, smoothingBound)
+            bigrams.append((k, b))
+
+        #load the validation file
+        validationList = list()
+        content = open("validation.txt").readlines()
+        for line in content:
+            m = re.match(r"^\S+", line)
+            author = m.group(0)
+            email = (re.compile(r'^\S+').sub('',line)).strip()
+            validationList.append((author, email))
+
+        #Comparing our determination with the validation set.
+        right = 0
+        wrong = 0
+        for (ans, unknown) in validationList:
+            if ans == self.guess(3, unknown, bigrams):
+                right += 1
+            else:
+                wrong += 1
+        print("Right: " + str(right))
+        print("Wrong: " + str(wrong))
+        print("Accuracy: " + str(float(right) / (right + wrong)))
 
     def exit(self, args):
         print("Exiting...")
