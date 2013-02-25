@@ -259,24 +259,23 @@ def authorPredictionValidation(smoothingBound):
         bigrams.append((k, b))
 
      #load the validation file
-    validationDictionary = dict()
+    validationList = list()
     with open("validation.txt") as f:
         content = f.readlines()
     for line in content:
         m = re.match(r"^\S+", line)
         author = m.group(0)
         rest = (re.compile(r'^\S+').sub('',line)).strip()
-        if author in validationDictionary:
-            validationDictionary[author] += " " + rest
-        else:
-            validationDictionary[author] = rest
+        validationList.append((author, rest))
     right = 0
     wrong = 0
-    for (ans, unknown) in validationDictionary.iteritems():
+    for (ans, unknown) in validationList:
         if ans == authorTrainPreprocess(3, unknown, bigrams):
             right += 1
         else:
             wrong += 1
+    print("Right: " + str(right))
+    print("Wrong: " + str(wrong))
     print("Accuracy: " + str(float(right) / (right + wrong)))
 def authorPrediction():
     pass
