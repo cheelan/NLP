@@ -59,7 +59,7 @@ class Shell:
                 authorDictionary[author] = email
         bigrams = list()
         for (k, v) in authorDictionary.iteritems():
-            b = Gram(2, v, smoothingBound)
+            b = Gram(1, v, smoothingBound)
             bigrams.append((k, b))
 
         #load the validation file

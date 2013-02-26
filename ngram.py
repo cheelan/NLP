@@ -6,9 +6,9 @@ commencement of an enterprise which you have regarded with such evil
 forebodings. I arrived here yesterday, and my first task is to assure
 my dear sister of my welfare and increasing confidence in the success
 of my undertaking."""
-
-sentence = "I went to the bank. The bank had a lot of people. The people had a lot of money. The people went to the cars."
 '''
+sentence = "I went to the bank. The bank had a lot of people. The people had a lot of money. The people went to the cars."
+
 
 class Gram:
     n = 0
@@ -17,6 +17,7 @@ class Gram:
     total_grams = 0
     count_list = [0]
     smoothing_bound = 0
+    vocab = set()
 
     #n: number of grams (1 = unigram, 2 = bigram, etc.)
     #text: a text corpus to model
@@ -29,12 +30,11 @@ class Gram:
         self.smoothing_bound = smoothingBound
         self.count_list= [0]*(self.smoothing_bound + 1)
         unique_ngrams = 0
-        vocab = set()
-
+        self.vocab = set()
         previous = list()   # Sentences are NOT independent of one another. 
         word_generator = self.text_parse(text)
         for word in word_generator:
-            vocab.add(word)
+            self.vocab.add(word)
             #Maintain queue of n most recent words
             previous.append(word)
             if len(previous) < n:
@@ -65,7 +65,7 @@ class Gram:
                 if count <= self.smoothing_bound:
                     self.count_list[count] += 1
 
-        self.unique_words = len(vocab)
+        self.unique_words = len(self.vocab)
         self.count_list[0] = self.unique_words**n - unique_ngrams
         print("UNique_words: " + str(self.unique_words))
         print("UNique_grams: " + str(unique_ngrams))
@@ -84,7 +84,8 @@ class Gram:
 
     # Parses the text by removing the HTML tags and creates a generator of the words in the text.
     def text_parse(self, text):
-        if text == "NONE":
+        if text == None:
+            text = ''
             for fname in os.listdir(os.getcwd()):
                 if fname.endswith(".train"):
                     inputFile = open(fname,'r')
@@ -105,46 +106,50 @@ class Gram:
         lst = list()
         word_generator = self.text_parse(text)
         length = 0
-        for word in word_generator:
-            length += 1
-            #Maintain queue of n most recent words
-            lst.append(word) 
-            if len(lst) < self.n:
-                continue
-            while len(lst) > self.n:
-                lst.pop(0)
-            temp = copy.deepcopy(lst)
-            nMinusOne = str(temp.pop())
-            key = str(temp)
-            #Need to adjust these for unknown words
-            if self.smoothing_bound > 0:
-                zero_count = float(self.count_list[1]) / float(self.count_list[0])
-            else:
-                zero_count = 0
-            numerator = 0.
-            denominator = 0.
+        try:
+            for word in word_generator:
+                length += 1
+                #Maintain queue of n most recent words
+                lst.append(word) 
+                if len(lst) < self.n:
+                    continue
+                while len(lst) > self.n:
+                    lst.pop(0)
+                temp = copy.deepcopy(lst)
+                nMinusOne = str(temp.pop())
+                key = str(temp)
+                #Need to adjust these for unknown words
+                if self.smoothing_bound > 0:
+                    zero_count = float(self.count_list[1]) / float(self.count_list[0])
+                else:
+                    zero_count = 0
+                numerator = 0.
+                denominator = 0.
 
-            if not (key in self.dictionary):
-                numerator = zero_count
-                denominator = self.total_grams + (zero_count * self.count_list[0])
-            elif key in self.dictionary and (not (nMinusOne in self.dictionary[key])):
-                numerator = zero_count
-                i = 0
-                for v in self.dictionary[key].values():
-                    i += 1
-                    denominator += v
-                denominator += float(self.unique_words - i) * zero_count
-            elif key in self.dictionary and nMinusOne in self.dictionary[key]:
-                i = 0
-                numerator = self.dictionary[key][nMinusOne]
-                for v in self.dictionary[key].values():
-                    i += 1
-                    denominator += v
-                denominator += float(self.unique_words - i) * zero_count
-            else:
-                print("Hit a spot where it should never go.")
-            p += math.log10(denominator / numerator)
-        return 10**(p * (1. / float(length)))   
+                if not (key in self.dictionary):
+                    numerator = zero_count
+                    denominator = self.total_grams + (zero_count * self.count_list[0])
+                elif key in self.dictionary and (not (nMinusOne in self.dictionary[key])):
+                    numerator = zero_count
+                    i = 0
+                    for v in self.dictionary[key].values():
+                        i += 1
+                        denominator += v
+                    denominator += float(self.unique_words - i) * zero_count
+                elif key in self.dictionary and nMinusOne in self.dictionary[key]:
+                    i = 0
+                    numerator = self.dictionary[key][nMinusOne]
+                    for v in self.dictionary[key].values():
+                        i += 1
+                        denominator += v
+                    denominator += float(self.unique_words - i) * zero_count
+                else:
+                    print("Hit a spot where it should never go.")
+                p += math.log10(denominator / numerator)
+            return 10**(p * (1. / float(length)))   
+        except:
+            #print("Infinity")
+            return 0
 
     def randomSentence(self):
         prev = "['<s>']"
@@ -194,7 +199,16 @@ class Gram:
                         sentence += " " + k
                         prev = "['" + k + "']"
                         break
-                #TO-DO: If this part is reached, then pick a random gram that appears 0 times
+                #pick a word that appears 0 times
+                copySet = copy.deepcopy(self.vocab)
+                copySet = list(copySet)
+                while True:
+                    setRand = int(random.random() * len(copySet))         
+                    randEl = copySet.pop(setRand)
+                    if randEl in self.dictionary[prev]:
+                        continue
+                    sentence += " " + randEl
+                    break
             else:
                 return "Error: " + prev + " not in ngram model"
 
@@ -307,6 +321,7 @@ def gtSmooth(ngram, smoothingBound):
 #ngram(int(sys.argv[1]), sentence)
 
 #test = Gram(1, sentence, 0)
+#print(test.dictionary)
 #test = Gram(2, "NONE", 3)
 #print(test.dictionary)
 #print(test.count_list)
@@ -314,7 +329,7 @@ def gtSmooth(ngram, smoothingBound):
 #print("Random sentence: " + test.randomSentence())
 #print("Score of a sentence: " + str(test.getPerplexity("You will rejoice to hear that no disaster has accompanied")))
 #print(str(authorPredictionValidation(3)))
-#print("Score of a sentence: " + str(test.getPerplexity("the bank cars.")))
+#print("Score of a sentence: " + str(test.getPerplexity("the bank cars firetruck.")))
 #print(ngrams["[',']"])
 #print(str(ngrams))
 
