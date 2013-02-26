@@ -199,7 +199,6 @@ class Gram:
                         sentence += " " + k
                         prev = "['" + k + "']"
                         break
-                #pick a word that appears 0 times
                 copySet = copy.deepcopy(self.vocab)
                 copySet = list(copySet)
                 while True:
