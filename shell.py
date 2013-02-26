@@ -12,9 +12,11 @@ class Shell:
     # Training of the various ngram models. 
     # Constructor: n, smoothing bound
     def train(self, args):
-        self.unigram = Gram(1, None, int(args[2]))
+        #self.unigram = Gram(1, None, int(args[2]))
         self.bigram = Gram(2, None, int(args[2]))
-        self.ngram = Gram(int(args[1]), None, int(args[2]))
+        #self.ngram = Gram(int(args[1]), None, int(args[2]))
+        text = open("wsj.test",'r').read()
+        print(str(self.bigram.getPerplexity(text)))
 
     def import_data(self, args):
         data = anydbm.open('data.log', 'r')
