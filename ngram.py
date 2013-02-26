@@ -1,15 +1,5 @@
 import sys, itertools, copy, random, nltk.tokenize, os, re, math
 
-'''
-sentence = """You will rejoice to hear that no disaster has accompanied the
-commencement of an enterprise which you have regarded with such evil
-forebodings. I arrived here yesterday, and my first task is to assure
-my dear sister of my welfare and increasing confidence in the success
-of my undertaking."""
-'''
-sentence = "I went to the bank. The bank had a lot of people. The people had a lot of money. The people went to the cars."
-
-
 class Gram:
     n = 0
     dictionary = None
@@ -67,8 +57,7 @@ class Gram:
 
         self.unique_words = len(self.vocab)
         self.count_list[0] = self.unique_words**n - unique_ngrams
-        print("UNique_words: " + str(self.unique_words))
-        print("UNique_grams: " + str(unique_ngrams))
+        print("Current Model Completed.")
         if (self.smoothing_bound > 0):
             self.apply_smoothing()
 
@@ -151,6 +140,7 @@ class Gram:
             #print("Infinity")
             return 0
 
+    #Generates a random sentence based on the current gram model.
     def randomSentence(self):
         prev = "['<s>']"
         sentence = ""
@@ -199,137 +189,5 @@ class Gram:
                         sentence += " " + k
                         prev = "['" + k + "']"
                         break
-                copySet = copy.deepcopy(self.vocab)
-                copySet = list(copySet)
-                while True:
-                    setRand = int(random.random() * len(copySet))         
-                    randEl = copySet.pop(setRand)
-                    if randEl in self.dictionary[prev]:
-                        continue
-                    sentence += " " + randEl
-                    break
             else:
-                return "Error: " + prev + " not in ngram model"
-
-'''      
-def authorTrainPreprocess(smoothingBound, unknown, bigrams):
-    bestAuthor = ""
-    bestScore = float('inf')
-    for (a, b) in bigrams:
-        perp = b.getPerplexity(unknown)
-        if perp < bestScore:
-            bestAuthor = a
-            bestScore = perp
-    return bestAuthor
-
-def authorPredictionValidation(smoothingBound):
-     #load the train file
-    authorDictionary = dict()
-    with open("train.txt") as f:
-        content = f.readlines()
-    for line in content:
-        m = re.match(r"^\S+", line)
-        author = m.group(0)
-        rest = (re.compile(r'^\S+').sub('',line)).strip()
-        if author in authorDictionary:
-            authorDictionary[author] += " " + rest
-        else:
-            authorDictionary[author] = rest
-
-    bigrams = list()
-    for (k, v) in authorDictionary.iteritems():
-        b = Gram(2, v, smoothingBound)
-        bigrams.append((k, b))
-
-     #load the validation file
-    validationList = list()
-    with open("validation.txt") as f:
-        content = f.readlines()
-    for line in content:
-        m = re.match(r"^\S+", line)
-        author = m.group(0)
-        rest = (re.compile(r'^\S+').sub('',line)).strip()
-        validationList.append((author, rest))
-    right = 0
-    wrong = 0
-    for (ans, unknown) in validationList:
-        if ans == authorTrainPreprocess(3, unknown, bigrams):
-            right += 1
-        else:
-            wrong += 1
-    print("Right: " + str(right))
-    print("Wrong: " + str(wrong))
-    print("Accuracy: " + str(float(right) / (right + wrong)))
-
-def authorPrediction():
-    pass
-
-def fillZeros(vocab, n):
-    for perm in itertools.product(vocab.keys(), repeat=n):
-        key = list()
-        for p in perm[0:(n-1)]:
-            key.append(p)
-        last = str(perm[n-1])
-        key = str(key)
-        
-        #key = key.replace("(", "[")
-        #key = key.replace(")", "]")
-        #Do this better. Data with parentheses will break ^
-        if not (key in ngrams): 
-            ngrams[key] = {last : 0};
-        else:
-            if not (last in ngrams[key]):
-                (ngrams[key])[last] = 0 
-
-#Utility functions for our special nested dictionary
-def updateCount(dict, ngram, newCount):
-    #Convert the string input to a list
-    l = [ngram.strip(" '") for ngram in ngram.strip('[]').split(',')]
-    #the last word
-    word = l.pop() 
-    key = str(l)
-    if key in dict and word in dict[key]:
-        dict[key][word] = newCount
-        return
-    print("WARNING: " + ngram + " is not in the current model, so it can't be updated")
-
-def getCount(dict, ngram):
-    #Convert the string input to a list
-    l = [ngram.strip(" '") for ngram in ngram.strip('[]').split(',')]
-    #the last word
-    word = l.pop() 
-    key = str(l)
-    if key in dict and word in dict[key]:
-        return dict[key][word]
-    return 0
-
-#Currently not used
-def gtSmooth(ngram, smoothingBound):
-    count = 0
-    if ngram in ngrams:
-        count = ngrams[ngram]
-    if count >= smoothingBound:
-        return count
-    return (count + 1) * (countList[count+1] / countList[count])
-'''
-
-
-
-
-
-#ngram(int(sys.argv[1]), sentence)
-
-#test = Gram(1, sentence, 0)
-#print(test.dictionary)
-#test = Gram(2, "NONE", 3)
-#print(test.dictionary)
-#print(test.count_list)
-#print("Count 0: "+ str(getCount(ngrams, "['ate', 'apple']")))
-#print("Random sentence: " + test.randomSentence())
-#print("Score of a sentence: " + str(test.getPerplexity("You will rejoice to hear that no disaster has accompanied")))
-#print(str(authorPredictionValidation(3)))
-#print("Score of a sentence: " + str(test.getPerplexity("the bank cars firetruck.")))
-#print(ngrams["[',']"])
-#print(str(ngrams))
-
-#nltkTest()
+                return sentence
