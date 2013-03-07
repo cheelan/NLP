@@ -65,7 +65,7 @@ class Supervised:
         for s in senses:
             self.word_sense_dictionary[target].add_features(s, features)
         #Update word/sense counts
-        self.print_dict()
+
         pass
 
     #Given a train file, fill in the nested dictionary
@@ -81,4 +81,6 @@ class Supervised:
                 print(w + " : " + str(self.word_sense_dictionary[w].senses[s].featureUnigram))
 
 s = Supervised()
-s.train_line("ate an ate an x", "apple", [1])
+s.train_line("I went fishing for some sea", "bass", [0])
+s.train_line("The line of the song is too weak", "bass", [1])
+s.print_dict()
