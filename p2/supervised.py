@@ -15,12 +15,14 @@ class Word:
             return 0
 
     def add_sense(self, sense):
-        this.senses[sense] = Sense()
+        self.senses[sense] = Sense()
 
-    def add_feature(self, sense, feature):
+    def add_features(self, sense, features):
         #Check if sense is in the dictionary
-        #Call Sense.add_feature
-        pass
+        if not sense in self.senses:
+            self.senses[sense] = Sense()
+        for f in features:
+            self.senses[sense].add_feature(f)
 
 
 class Sense:
@@ -48,27 +50,35 @@ class Supervised:
     word_sense_dictionary = None
 
     def __init__(self):
-        this.word_sense_dictionary = dict()
+        self.word_sense_dictionary = dict()
 
     #Trains the model on one line's worth of info
     #Need to account for case, stemming, etc
     #Senses is a list of ints
-    def train_line(context, target, senses):
+    def train_line(self, context, target, senses):
+        #Convert context to features
+        features = context.split(" ")
         #Lookup target in the dictionary
         if target not in self.word_sense_dictionary:
             self.word_sense_dictionary[target] = Word()
-        for s in senses:
-            self.word_sense_dictionary[target].add_sense(s)
         #Call add_features(context) on the entry
+        for s in senses:
+            self.word_sense_dictionary[target].add_features(s, features)
         #Update word/sense counts
-        
+        self.print_dict()
         pass
 
     #Given a train file, fill in the nested dictionary
-    def train(file):
+    def train(self, file):
         pass
 
-    def test(file):
+    def test(self, file):
         pass
 
+    def print_dict(self):
+        for w in self.word_sense_dictionary.keys():
+            for s in self.word_sense_dictionary[w].senses:
+                print(w + " : " + str(self.word_sense_dictionary[w].senses[s].featureUnigram))
 
+s = Supervised()
+s.train_line("ate an ate an x", "apple", [1])
