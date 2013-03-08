@@ -24,7 +24,7 @@ class Word:
             self.senses[sense] = Sense()
         for f in features:
             self.senses[sense].add_feature(f)
-            self.total_count += 1
+        self.total_count += 1
 
 
 class Sense:
@@ -65,19 +65,24 @@ class Supervised:
             print("ERROR: " + str(sense) + " is not a valid sense")
             return -1
         features = self.wsd[target].senses[sense]
-        prob = self.get_initial_prob()
+        prob = self.get_initial_prob(target, sense)
         #Abstract this to another method
         #get the feature count count(f_j, s)
         sense_count = self.wsd[target].get_sense_count(sense)
         for f in context:
             feature_count = features.get_feature_count(f)
+            print( str(float(feature_count)) + " / " + str(float(sense_count)))
             prob *= float(feature_count) / float(sense_count)
         #return prob
         return prob**(1. / float(len(context)))
     
-    #TO-DO
-    def get_initial_prob(self):
-        return 1.0
+    def get_initial_prob(self, target, sense):
+        sense_count = self.wsd[target].get_sense_count(sense)
+        word_count = self.wsd[target].total_count
+        if word_count == 0:
+            print("ERROR: No words in the dictionary")
+
+        return float(sense_count) / float(word_count)
 
     def train_line_test(self, context, target, senses):
         #Convert context to features
@@ -180,5 +185,6 @@ s.print_dict()
 '''
 
 s.train_line_test("I went fishing for some sea", "bass", [1])
+s.train_line_test("sea fishing fish", "bass", [1])
 s.train_line_test("The line of the song is too weak", "bass", [2])
 print(str(s.test_line("bass", "I fishing sea fish apple", [0, 0, 0])))
