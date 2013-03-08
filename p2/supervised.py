@@ -40,7 +40,6 @@ class Sense:
             self.featureUnigram[feature] += 1
         else:
             self.featureUnigram[feature] = 1
-        self.occurrences += 1
 
     def get_feature_count(self, feature):
         if feature in self.featureUnigram:
@@ -73,6 +72,7 @@ class Supervised:
         for f in context:
             feature_count = features.get_feature_count(f)
             prob *= float(feature_count) / float(sense_count)
+        #return prob
         return prob**(1. / float(len(context)))
     
     #TO-DO
@@ -88,6 +88,7 @@ class Supervised:
         #Call add_features(context) on the entry
         for s in senses:
             self.wsd[target].add_features(s, features)
+            self.wsd[target].senses[s].occurrences += 1
         #Update word/sense counts
 
         pass
