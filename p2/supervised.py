@@ -77,8 +77,9 @@ class Supervised:
 
     def print_dict(self):
         for w in self.word_sense_dictionary.keys():
+            print(w + " : ")
             for s in self.word_sense_dictionary[w].senses:
-                print(w + " : " + str(self.word_sense_dictionary[w].senses[s].featureUnigram))
+                print("\t" + str(self.word_sense_dictionary[w].senses[s].featureUnigram))
 
 s = Supervised()
 s.train_line("I went fishing for some sea", "bass", [0])
