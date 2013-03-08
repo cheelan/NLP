@@ -1,8 +1,11 @@
 import sys, itertools, copy, random, nltk, os, re, math
 from nltk.stem.porter import PorterStemmer
 
+#Factor for +k smoothing
+smoothing = 1.
+
 class Word:
-    total_count = 0
+    total_count = smoothing
     senses = None
 
     def __init__(self):
@@ -13,7 +16,7 @@ class Word:
             return self.senses[sense].occurrences
         else:
             #TO-DO: SMOOTH
-            return 0
+            return smoothing
 
     def add_sense(self, sense):
         self.senses[sense] = Sense()
@@ -28,7 +31,7 @@ class Word:
 
 
 class Sense:
-    occurrences = 0
+    occurrences = smoothing
     featureUnigram = None
 
     def __init__(self):
@@ -45,8 +48,8 @@ class Sense:
         if feature in self.featureUnigram:
             return self.featureUnigram[feature]
         #TO-DO: Return a smoothed value
-        print("DO YOUR SMOOTHING")
-        return 0.001
+        #print("DO YOUR SMOOTHING")
+        return smoothing
 
 #For testing and such
 class Supervised:
