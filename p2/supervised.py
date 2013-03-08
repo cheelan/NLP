@@ -110,10 +110,10 @@ class Supervised:
             features[i] = ps.stem(features[i])
         # Word already exists.
         if self.wsd.contains_key(senselist[0]):
-
+            pass
         else:
             self.wsd[senselist[0]] = Word()
-            for 
+            #for 
 
         '''
         #Lookup target in the dictionary
