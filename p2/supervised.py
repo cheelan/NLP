@@ -68,7 +68,7 @@ class Supervised:
         prob = self.get_initial_prob()
         #Abstract this to another method
         #get the feature count count(f_j, s)
-        sense_count = self.wsd[target].senses[sense].occurrences
+        sense_count = self.wsd[target].get_sense_count(sense)
         for f in context:
             feature_count = features.get_feature_count(f)
             prob *= float(feature_count) / float(sense_count)
