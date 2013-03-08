@@ -142,7 +142,8 @@ class Supervised:
     #Senses: List of 0s
     #@Return: Returns the senses list with 0s replaced by 1s
     def test_line(self, target, context, senses):
-        ans_list = [0]*len(senses)
+        ans_list = list()
+        ans_list.append(0) #First entry is a no-answer
         thres = 0.0
         if target not in self.wsd:
             print("ERROR: " + target + " not in dictionary")
@@ -152,8 +153,11 @@ class Supervised:
             sense_num += 1
             score = self.get_sense_prob(target, sense_num)
             if score > thres:
-                ans_list[sense_num] = 1
-        print ans_list
+                ans_list.append(1)
+            else:
+                ans_list.append(0)
+        return ans_list
+        
                 
             
 
@@ -173,4 +177,4 @@ s.print_dict()
 
 s.train_line_test("I went fishing for some sea", "bass", [1])
 s.train_line_test("The line of the song is too weak", "bass", [2])
-s.test_line("bass", "I fishing sea fish apple", [0, 0, 0])
+print(str(s.test_line("bass", "I fishing sea fish apple", [0, 0, 0])))
