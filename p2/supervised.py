@@ -47,24 +47,24 @@ class Sense:
 
 #For testing and such
 class Supervised:
-    word_sense_dictionary = None
+    wsd = None
 
     def __init__(self):
-        self.word_sense_dictionary = dict()
+        self.wsd = dict()
 
     #target: the word to disambiguate
     #sense: An int between 0 and n-1, where n is the number of senses that the word has
     def get_sense_prob(self, target, sense):
-        if target not in self.word_sense_dictionary:
+        if target not in self.wsd:
             print("ERROR: " + target + " not in dictionary")
             return -1
-        if sense not in self.word_sense_dictionary[target].senses:
+        if sense not in self.wsd[target].senses:
             print("ERROR: " + sense + " is not a valid sense")
-        features = self.word_sense_dictionary[target].senses[sense]
+        features = self.wsd[target].senses[sense]
         prob = get_initial_prob()
         #Abstract this to another method
         #get the feature count count(f_j, s)
-        sense_count = self.word_sense_dictionary[target].senses[sense].occurrences
+        sense_count = self.wsd[target].senses[sense].occurrences
         for f in features.featureUnigram.keys():
             feature_count = features.get_feature_count(f)
             prob *= float(feature_count) / float(sense_count)
@@ -121,10 +121,10 @@ class Supervised:
         pass
 
     def print_dict(self):
-        for w in self.word_sense_dictionary.keys():
+        for w in self.wsd.keys():
             print(w + " : ")
-            for s in self.word_sense_dictionary[w].senses:
-                print("\t" + str(self.word_sense_dictionary[w].senses[s].featureUnigram))
+            for s in self.wsd[w].senses:
+                print("\t" + str(self.wsd[w].senses[s].featureUnigram))
 
 s = Supervised()
 s.train("testing_data.data")
