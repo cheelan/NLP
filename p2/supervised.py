@@ -55,9 +55,27 @@ class Supervised:
     #Trains the model on one line's worth of info
     #Need to account for case, stemming, etc
     #Senses is a list of ints
-    def train_line(self, context, target, senses):
-        #Convert context to features
-        features = context.split(" ")
+    def train_line(self, text):
+        #Convert text into partitions. 
+        #features[0]: word.pos t0 t1 ... tk
+        #features[1]: prev-context
+        #features[2]: head
+        #features[3]: next-context
+        features = text.lower().split("@")
+        # Handling of features[0]
+        pieces= re.findall('\w+', features[0])
+        # Word already exists.
+        print(pieces)
+        '''
+        if self.word_sense_dictionary.contains_key(pieces[0]):
+
+        else:
+            self.word_sense_dictionary[pieces[0]] = Word()
+        '''
+
+
+
+        '''
         #Lookup target in the dictionary
         if target not in self.word_sense_dictionary:
             self.word_sense_dictionary[target] = Word()
@@ -65,12 +83,17 @@ class Supervised:
         for s in senses:
             self.word_sense_dictionary[target].add_features(s, features)
         #Update word/sense counts
-
-        pass
+        '''
 
     #Given a train file, fill in the nested dictionary
-    def train(self, file):
-        pass
+    def train(self, filename):
+        data = open(filename, 'r')
+        if (data == None):
+            print("Error: Training file not found")
+        else:
+            data = data.readlines()
+            for line in data:
+                self.train_line(line)
 
     def test(self, file):
         pass
@@ -82,6 +105,9 @@ class Supervised:
                 print("\t" + str(self.word_sense_dictionary[w].senses[s].featureUnigram))
 
 s = Supervised()
+s.train("testing_data.data")
+'''
 s.train_line("I went fishing for some sea", "bass", [0])
 s.train_line("The line of the song is too weak", "bass", [1])
 s.print_dict()
+'''
