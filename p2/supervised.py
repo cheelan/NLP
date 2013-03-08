@@ -148,7 +148,7 @@ class Supervised:
             print("ERROR: " + target + " not in dictionary")
             pass
         sense_num = 0 #Skip the first sense because it's a "no-answer"
-        for s in senses:
+        for s in range(len(senses)-1):
             sense_num += 1
             score = self.get_sense_prob(target, sense_num)
             if score > thres:
