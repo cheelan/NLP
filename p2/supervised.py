@@ -52,6 +52,28 @@ class Supervised:
     def __init__(self):
         self.word_sense_dictionary = dict()
 
+    #target: the word to disambiguate
+    #sense: An int between 0 and n-1, where n is the number of senses that the word has
+    def get_sense_prob(self, target, sense):
+        if target not in self.word_sense_dictionary:
+            print("ERROR: " + target + " not in dictionary")
+            return -1
+        if sense not in self.word_sense_dictionary[target].senses:
+            print("ERROR: " + sense + " is not a valid sense")
+        features = self.word_sense_dictionary[target].senses[sense]
+        prob = get_initial_prob()
+        #Abstract this to another method
+        #get the feature count count(f_j, s)
+        sense_count = self.word_sense_dictionary[target].senses[sense].occurrences
+        for f in features.featureUnigram.keys():
+            feature_count = features.get_feature_count(f)
+            prob *= float(feature_count) / float(sense_count)
+        return prob
+    
+    #TO-DO
+    def get_initial_prob():
+        return 1.0
+
     #Trains the model on one line's worth of info
     #Need to account for case, stemming, etc
     #Senses is a list of ints
@@ -111,3 +133,4 @@ s.train_line("I went fishing for some sea", "bass", [0])
 s.train_line("The line of the song is too weak", "bass", [1])
 s.print_dict()
 '''
+
