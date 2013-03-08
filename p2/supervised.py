@@ -46,7 +46,8 @@ class Sense:
         if feature in self.featureUnigram:
             return self.featureUnigram[feature]
         #TO-DO: Return a smoothed value
-        return 0
+        print("DO YOUR SMOOTHING")
+        return 0.001
 
 #For testing and such
 class Supervised:
@@ -57,7 +58,7 @@ class Supervised:
 
     #target: the word to disambiguate
     #sense: An int between 0 and n-1, where n is the number of senses that the word has
-    def get_sense_prob(self, target, sense):
+    def get_sense_prob(self, target, context, sense):
         if target not in self.wsd:
             print("ERROR: " + target + " not in dictionary")
             return -1
@@ -69,10 +70,10 @@ class Supervised:
         #Abstract this to another method
         #get the feature count count(f_j, s)
         sense_count = self.wsd[target].senses[sense].occurrences
-        for f in features.featureUnigram.keys():
+        for f in context:
             feature_count = features.get_feature_count(f)
             prob *= float(feature_count) / float(sense_count)
-        return prob
+        return prob**(1. / float(len(context)))
     
     #TO-DO
     def get_initial_prob(self):
@@ -145,13 +146,15 @@ class Supervised:
         ans_list = list()
         ans_list.append(0) #First entry is a no-answer
         thres = 0.0
+        features = context.split(" ")
         if target not in self.wsd:
             print("ERROR: " + target + " not in dictionary")
             pass
         sense_num = 0 #Skip the first sense because it's a "no-answer"
         for s in range(len(senses)-1):
             sense_num += 1
-            score = self.get_sense_prob(target, sense_num)
+            score = self.get_sense_prob(target, features, sense_num)
+            print("Sense Num: " + str(sense_num) + " Value: " + str(score))
             if score > thres:
                 ans_list.append(1)
             else:
