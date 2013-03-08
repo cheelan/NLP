@@ -1,4 +1,5 @@
-import sys, itertools, copy, random, nltk.tokenize, os, re, math
+import sys, itertools, copy, random, nltk, os, re, math
+from nltk.stem.porter import PorterStemmer
 
 class Word:
     total_count = 0
@@ -100,26 +101,27 @@ class Supervised:
         #features[2]: head
         #features[3]: next-context
         features = text.lower().split("@")
-        # Handling of features[0]
-        pieces= re.findall('\w+', features[0])
+        # Handling of features[0] and combining of prev and next context into features
+        senselist= re.findall('\w+', features[0])
+        features = nltk.tokenize.regexp_tokenize((features[1] + " " + features[3]), r'\w+')
+        # Stemming of all features
+        ps = PorterStemmer()
+        for i in range(len(features)):
+            features[i] = ps.stem(features[i])
         # Word already exists.
-        print(pieces)
-        '''
-        if self.word_sense_dictionary.contains_key(pieces[0]):
+        if self.wsd.contains_key(senselist[0]):
 
         else:
-            self.word_sense_dictionary[pieces[0]] = Word()
-        '''
-
-
+            self.wsd[senselist[0]] = Word()
+            for 
 
         '''
         #Lookup target in the dictionary
-        if target not in self.word_sense_dictionary:
-            self.word_sense_dictionary[target] = Word()
+        if target not in self.wsd:
+            self.wsd[target] = Word()
         #Call add_features(context) on the entry
         for s in senses:
-            self.word_sense_dictionary[target].add_features(s, features)
+            self.wsd[target].add_features(s, features)
         #Update word/sense counts
         '''
 
