@@ -23,6 +23,7 @@ class Word:
             self.senses[sense] = Sense()
         for f in features:
             self.senses[sense].add_feature(f)
+            self.total_count += 1
 
 
 class Sense:
@@ -38,6 +39,7 @@ class Sense:
             self.featureUnigram[feature] += 1
         else:
             self.featureUnigram[feature] = 1
+        self.occurrences += 1
 
     def get_feature_count(self, feature):
         if feature in self.featureUnigram:
@@ -59,9 +61,10 @@ class Supervised:
             print("ERROR: " + target + " not in dictionary")
             return -1
         if sense not in self.wsd[target].senses:
-            print("ERROR: " + sense + " is not a valid sense")
+            print("ERROR: " + str(sense) + " is not a valid sense")
+            return -1
         features = self.wsd[target].senses[sense]
-        prob = get_initial_prob()
+        prob = self.get_initial_prob()
         #Abstract this to another method
         #get the feature count count(f_j, s)
         sense_count = self.wsd[target].senses[sense].occurrences
@@ -71,8 +74,21 @@ class Supervised:
         return prob
     
     #TO-DO
-    def get_initial_prob():
+    def get_initial_prob(self):
         return 1.0
+
+    def train_line_test(self, context, target, senses):
+        #Convert context to features
+        features = context.split(" ")
+        #Lookup target in the dictionary
+        if target not in self.wsd:
+            self.wsd[target] = Word()
+        #Call add_features(context) on the entry
+        for s in senses:
+            self.wsd[target].add_features(s, features)
+        #Update word/sense counts
+
+        pass
 
     #Trains the model on one line's worth of info
     #Need to account for case, stemming, etc
@@ -120,6 +136,25 @@ class Supervised:
     def test(self, file):
         pass
 
+    #Returns all senses that are good
+    #Senses: List of 0s
+    #@Return: Returns the senses list with 0s replaced by 1s
+    def test_line(self, target, context, senses):
+        ans_list = [0]*len(senses)
+        thres = 0.0
+        if target not in self.wsd:
+            print("ERROR: " + target + " not in dictionary")
+            pass
+        sense_num = 0 #Skip the first sense because it's a "no-answer"
+        for s in senses:
+            sense_num += 1
+            score = self.get_sense_prob(target, sense_num)
+            if score > thres:
+                ans_list[sense_num] = 1
+        print ans_list
+                
+            
+
     def print_dict(self):
         for w in self.wsd.keys():
             print(w + " : ")
@@ -127,10 +162,13 @@ class Supervised:
                 print("\t" + str(self.wsd[w].senses[s].featureUnigram))
 
 s = Supervised()
-s.train("testing_data.data")
+#s.train("testing_data.data")
 '''
 s.train_line("I went fishing for some sea", "bass", [0])
 s.train_line("The line of the song is too weak", "bass", [1])
 s.print_dict()
 '''
 
+s.train_line_test("I went fishing for some sea", "bass", [1])
+s.train_line_test("The line of the song is too weak", "bass", [2])
+s.test_line("bass", "I fishing sea fish apple", [0, 0, 0])
