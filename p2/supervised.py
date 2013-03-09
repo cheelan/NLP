@@ -1,8 +1,8 @@
-import sys, itertools, copy, random, nltk, os, re, math
+import sys, itertools, copy, random, nltk, os, re, math, string
 from nltk.stem.porter import PorterStemmer
 
 #Factor for +k smoothing
-smoothing = 1.
+smoothing = .01
 
 class Word:
     total_count = smoothing
@@ -15,7 +15,6 @@ class Word:
         if sense in self.senses:
             return self.senses[sense].occurrences
         else:
-            #TO-DO: SMOOTH
             return smoothing
 
     def add_sense(self, sense):
@@ -47,9 +46,8 @@ class Sense:
     def get_feature_count(self, feature):
         if feature in self.featureUnigram:
             return self.featureUnigram[feature]
-        #TO-DO: Return a smoothed value
-        #print("DO YOUR SMOOTHING")
-        return smoothing
+        else:
+            return smoothing
 
 #For testing and such
 class Supervised:
@@ -74,7 +72,7 @@ class Supervised:
         sense_count = self.wsd[target].get_sense_count(sense)
         for f in context:
             feature_count = features.get_feature_count(f)
-            print( str(float(feature_count)) + " / " + str(float(sense_count)))
+            #print( str(float(feature_count)) + " / " + str(float(sense_count)))
             prob *= float(feature_count) / float(sense_count)
         #return prob
         return prob**(1. / float(len(context)))
@@ -84,47 +82,23 @@ class Supervised:
         word_count = self.wsd[target].total_count
         if word_count == 0:
             print("ERROR: No words in the dictionary")
-
         return float(sense_count) / float(word_count)
 
-    def train_line_test(self, context, target, senses):
-        #Convert context to features
-        features = context.split(" ")
-        #Lookup target in the dictionary
-        if target not in self.wsd:
-            self.wsd[target] = Word()
-        #Call add_features(context) on the entry
-        for s in senses:
-            self.wsd[target].add_features(s, features)
-            self.wsd[target].senses[s].occurrences += 1
-        #Update word/sense counts
-
-        pass
-
-    #Trains the model on one line's worth of info
-    #Need to account for case, stemming, etc
-    #Senses is a list of ints
-    def train_line(self, text):
-        #Convert text into partitions. 
-        #features[0]: word.pos t0 t1 ... tk
-        #features[1]: prev-context
-        #features[2]: head
-        #features[3]: next-context
-        features = text.lower().split("@")
-        # Handling of features[0] and combining of prev and next context into features
-        senselist= re.findall('\w+', features[0])
-        features = nltk.tokenize.regexp_tokenize((features[1] + " " + features[3]), r'\w+')
-        # Stemming of all features
+    #Given a line, fill in the nested dictionary
+    def train_line(self, context, target, senses):
+        #Convert context to feature words
+        features = nltk.tokenize.regexp_tokenize(context, r'\w+')
+        filtered_features = list()
+        '''
+        #Perforning feature filtering based on part of speach tag. 
+        result = nltk.pos_tag(features)
+        print(result)
+        '''
+        '''
+        #Performing stemming on feature words
         ps = PorterStemmer()
         for i in range(len(features)):
             features[i] = ps.stem(features[i])
-        # Word already exists.
-        if self.wsd.contains_key(senselist[0]):
-            pass
-        else:
-            self.wsd[senselist[0]] = Word()
-            #for 
-
         '''
         #Lookup target in the dictionary
         if target not in self.wsd:
@@ -132,8 +106,8 @@ class Supervised:
         #Call add_features(context) on the entry
         for s in senses:
             self.wsd[target].add_features(s, features)
-        #Update word/sense counts
-        '''
+            #Update word/sense counts
+            self.wsd[target].senses[s].occurrences += 1
 
     #Given a train file, fill in the nested dictionary
     def train(self, filename):
@@ -143,10 +117,20 @@ class Supervised:
         else:
             data = data.readlines()
             for line in data:
-                self.train_line(line)
+                #Convert text into partitions. #features[0]: word.pos t0 t1 ... tk
+                #features[1]: prev-context, features[2]: head, features[3]: next-context
+                features = line.lower().split("@")
+                # Spliting of features[0] into components and combining of prev and next context into context
+                senselist= re.findall('\w+', features[0])
+                context = features[1] + features[3]
+                # Handling of senselist
+                senses = list()
+                for i in range(3,len(senselist)):
+                    if senselist[i] == "1":
+                        senses.append(i-3)
+                # Call the train line function to handle
+                self.train_line(context, senselist[0], senses)
 
-    def test(self, file):
-        pass
 
     #Returns all senses that are good
     #Senses: List of 0s
@@ -155,39 +139,44 @@ class Supervised:
         ans_list = list()
         ans_list.append(0) #First entry is a no-answer
         thres = 0.0
+        sense_num = 0 
         features = context.split(" ")
         if target not in self.wsd:
             print("ERROR: " + target + " not in dictionary")
             pass
-        sense_num = 0 #Skip the first sense because it's a "no-answer"
         for s in range(len(senses)-1):
-            sense_num += 1
             score = self.get_sense_prob(target, features, sense_num)
             print("Sense Num: " + str(sense_num) + " Value: " + str(score))
             if score > thres:
                 ans_list.append(1)
             else:
                 ans_list.append(0)
+            sense_num += 1
         return ans_list
-        
-                
-            
 
     def print_dict(self):
         for w in self.wsd.keys():
-            print(w + " : ")
+            print("Word: " + w )
+            print("# of senses: " + str(len(self.wsd[w].senses)))
             for s in self.wsd[w].senses:
-                print("\t" + str(self.wsd[w].senses[s].featureUnigram))
+                print(str(s) + ":\t" + str(self.wsd[w].senses[s].featureUnigram))
 
 s = Supervised()
-#s.train("testing_data.data")
+s.train("testing_data.data")
+print(str(s.test_line("begin", "There is the clearing of the room , the removal of any trace of what had previously filled it . There is the laying by of all the necessary materials . Not , he wrote ( and Goldberg went on typing ) , that here in London one is cut off from such supplies in the normal course of events , but that work cannot until one knows one will not have to bother with such things , for a while at least . It is not a question , he wrote , of drawing up an inventory of all that is required , because that suggests that one can know exactly what will be required . Everything possible must be done , he wrote , and yet it must be as though nothing had been done.", [0, 0, 0, 0, 0])))
+#begin.v 0 0 1 0 0 @ There is the clearing of the room , the removal of any trace of what had previously filled it . There is the laying by of all the necessary materials . Not , he wrote ( and Goldberg went on typing ) , that here in London one is cut off from such supplies in the normal course of events , but that work cannot @begin@ until one knows one will not have to bother with such things , for a while at least . It is not a question , he wrote , of drawing up an inventory of all that is required , because that suggests that one can know exactly what will be required . Everything possible must be done , he wrote , and yet it must be as though nothing had been done .
+'''
+s.print_dict()
+print(str(s.test_line("begin", "I need to begin to pay off the money I owe.", [0, 0, 0, 0, 0])))
+'''
 '''
 s.train_line("I went fishing for some sea", "bass", [0])
 s.train_line("The line of the song is too weak", "bass", [1])
 s.print_dict()
 '''
-
-s.train_line_test("I went fishing for some sea", "bass", [1])
-s.train_line_test("sea fishing fish", "bass", [1])
-s.train_line_test("The line of the song is too weak", "bass", [2])
+'''
+s.train_line("I went fishing for some sea", "bass", [0])
+s.train_line("sea fishing fish", "bass", [0])
+s.train_line("The line of the song is too weak", "bass", [1])
 print(str(s.test_line("bass", "I fishing sea fish apple", [0, 0, 0])))
+'''
