@@ -1,5 +1,12 @@
 import sys, itertools, copy, random, nltk.tokenize, os, re, math
 
+###########################
+###########################
+###     NOT WORKING     ###
+###########################
+###########################
+
+
 class Scores:
     #n = 0
     #dictionary = None
@@ -23,33 +30,38 @@ class Scores:
         baseScore = 2
 
         while targetIndex<len(targetList):
+            targetFeature = targetList[targetIndex]
             if targetFeature in featureList:
                 start = targetIndex
-                checkIndex = featureList.index(targetList[targetIndex]) + 1
-                targetIndex+=1
+                checkTargetIndex = targetIndex + 1
+                checkIndex = featureList.index(targetFeature) + 1
                 consecutive = 1
-                while checkIndex<len(featureList):		# second run finds all remaining matches of targetFeature in featureList
-                    if checkTargetIndex>=len(targetList):
-                        #add sub-score here
-                        score+=baseScore**consecutive
-                        checkTargetIndex=start
-                        consecutive = 0
-                    else:
-                        if featureList[checkIndex]==targetList[checkTargetIndex]:
-                            consecutive+=1
-                            checkTargetIndex+=1
-                            checkIndex+=1
-                        else:
+                if checkIndex>=len(featureList):
+                    score+=baseScore**consecutive
+                else:
+                    while checkIndex<len(featureList):		# second run finds all remaining matches of targetFeature in featureList
+                        if checkTargetIndex>=len(targetList):
                             #add sub-score here
-                            #does there need to be a case where consecutive==0 because it should just be 0/1??
-                            #resolved?
-                            if consecutive==0:
+                            score+=baseScore**consecutive
+                            checkTargetIndex=start
+                            consecutive = 0
+                        else:
+                            if featureList[checkIndex]==targetList[checkTargetIndex]:
+                                consecutive+=1
+                                checkTargetIndex+=1
                                 checkIndex+=1
                             else:
                                 #add sub-score here
-                                score+=baseScore**consecutive
-                                consecutive=0
-                                checkTargetIndex=start
+                                #does there need to be a case where consecutive==0 because it should just be 0/1??
+                                #resolved?
+                                if consecutive==0:
+                                    checkIndex+=1
+                                else:
+                                    #add sub-score here
+                                    score+=baseScore**consecutive
+                                    consecutive=0
+                                    checkTargetIndex=start
+            targetIndex+=1
         return score
 
 '''
@@ -88,3 +100,5 @@ class Scores:
 
 s = Scores()
 print s.getScore('a b c d e', 'b b c a f')
+print s.getScore('A very fast candy bar', 'A very fast car file is very fast candy')
+
