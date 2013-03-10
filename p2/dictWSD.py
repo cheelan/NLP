@@ -7,7 +7,7 @@ class dictWSD:
         #self.dictionary['word1'] = ['A very fast candy bar', 'A very fast cat']
         #self.dictionary['word2'] = ['A very fast car file is very fast candy']
         #self.dictionary['word2'] = ['A very slow dog', 'A slow but very fat slow dog candy bar']
-        self.dictionary['fall'] = ['The season of sadness', 'The action of anti elevating']
+        self.dictionary['fall'] = ['The season of sadness', 'The action of anti elevating', 'Hey Casey, what is up?']
         self.dictionary['flying'] = ['The action of elevating above', 'Some kind of fishing', 'Being too cool for school']
         self.dictionary['birds'] = ['Badminton stuff that goes above', 'Mammals that love the action of elevating above']
         
@@ -15,17 +15,30 @@ class dictWSD:
     def WSD(self, target, context):             # executes WSD for the target word in a context
         features = context.split(' ')
         test = None
+        blah = None
         
         for feature in features:
             temp = self.compareWords(target, feature)
+            print feature
             print temp
             if test==None:
                 test = temp
+                blah = temp     # take out
             else:
                 for i in range(len(test)):
                     test[i] = test[i]+temp[i]
+        print 'sum: '
         print test
         
+        # threshold checking
+        for t in range(len(test)):
+            if test[t]>50:
+                blah[t] = 1
+            else:
+                blah[t] = 0
+        print 'final: '
+        print blah
+                
     def compareWords(self, target, feature):    # compares the target word to a context feature
         scores = [0]
         runningScore = 0
@@ -75,6 +88,6 @@ class dictWSD:
         return score
         
 d = dictWSD()
-d.WSD('fall', 'flying birds')
+d.WSD('fall', 'flying birds')       # output = each list is a list of scores for each sense in the target overlapping with one feature
 #print d.compareWords('a b c d e', 'b b c a f')
 #print d.compareWords('A very fast candy bar', 'A very fast car file is very fast candy')
