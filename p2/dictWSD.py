@@ -1,4 +1,5 @@
 from nltk.corpus import wordnet
+from nltk.stem.wordnet import WordNetLemmatizer
 import re
 
 class dictWSD:
@@ -126,8 +127,21 @@ class dictWSD:
     #Returns the definitions of a word in the XML dictionary, or [] or something if it isn't defined
     def xml_definition(self, d, word):
         return d[word]
+
+    def parse_target(self, string):
+    split = string.split('@')
+    targets = list()
+    for i in range(0, len(split)):
+        if i%2 == 1:
+            targets.append(split[i])
+    return targets
         
 d = dictWSD()
-d.WSD('activate', 'is a dog')       # output = each list is a list of scores for each sense in the target overlapping with one feature
+lemma = WordNetLemmatizer()
+input_str = ""
+for word in 'is a dog':
+    input_str += lemma.lemmatize(word)
+d.WSD(lemma.lemmatize('activate'), input_str)
+#d.WSD('activate', 'is a dog')       output = each list is a list of scores for each sense in the target overlapping with one feature
 #print d.compareWords('a b c d e', 'b b c a f')
 #print d.compareWords('A very fast candy bar', 'A very fast car file is very fast candy')

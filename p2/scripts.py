@@ -36,6 +36,14 @@ def genXmlDictionary(file):
 def xml_definition(d, word):
     return d[word]
 
+def parse_target(string):
+    split = string.split('@')
+    targets = list()
+    for i in range(0, len(split)):
+        if i%2 == 1:
+            targets.append(split[i])
+    return targets
+
 dictionary = genXmlDictionary('Dictionary.xml')
 
 for d in define_word(dictionary, "fish"):
