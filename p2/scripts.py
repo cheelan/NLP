@@ -3,14 +3,16 @@ import re
 
 #Returns a list of the definitions of all senses/synonyms of a word
 def define_word(d, word):
-    xmldef = xml_definition(d,word)
-    if len(xmldef) > 0:
-        return xmldef
-    synsets = wordnet.synsets(word)
-    definitions = list()
-    for s in synsets:
-        definitions.append(s.definition)
-    return definitions
+    try:
+        xmldef = xml_definition(d,word)
+        if len(xmldef) > 0:
+            return xmldef
+    except:
+        synsets = wordnet.synsets(word)
+        definitions = list()
+        for s in synsets:
+            definitions.append(s.definition)
+        return definitions
 
 def genXmlDictionary(file):
     xml = open(file).read()
@@ -36,6 +38,6 @@ def xml_definition(d, word):
 
 dictionary = genXmlDictionary('Dictionary.xml')
 
-for d in define_word(dictionary, "bank"):
+for d in define_word(dictionary, "fish"):
     print "---"
     print(d)
