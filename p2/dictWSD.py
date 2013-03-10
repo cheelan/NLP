@@ -128,14 +128,23 @@ class dictWSD:
     def xml_definition(self, d, word):
         return d[word]
 
-    def parse_target(self, string):
-    split = string.split('@')
-    targets = list()
-    for i in range(0, len(split)):
-        if i%2 == 1:
-            targets.append(split[i])
-    return targets
-        
+    def parse_training(self, file):
+    f = open(file)
+    lines = f.readlines()
+    parsed = list()
+    
+    for l in lines:
+        space_split = l.split(' ')
+        target = space_split[0][:-2]
+        at_split = l.split('@')
+        context = at_split[1:]
+        temp = ""
+        for c in context:
+            temp += c
+        parsed.append((target, temp))
+    return parsed
+
+#parse_training('debug_training.data')        
 d = dictWSD()
 lemma = WordNetLemmatizer()
 input_str = ""
