@@ -3,7 +3,7 @@ from nltk.stem.porter import PorterStemmer
 
 #Factor for +k smoothing
 smoothing = 1.0
-thres = 0.02
+thres = 0.08
 allowed_pos = ["FW", "JJ", "JJR", "JJS", "NN", "NNS", "NNP", "NNPS", "RB", "RBR", "RBS", "VB", "VBD", "VBG", "VBN", "VBP", "VBZ"]
 
 class Word:
@@ -176,7 +176,8 @@ class Supervised:
             print("Error: Testing file not found")
         else:
             data = data.readlines()
-            a = 1
+            a = 0
+            b = 0
             for line in data:
                 #Convert text into partitions. #features[0]: word.pos t0 t1 ... tk
                 #features[1]: prev-context, features[2]: head, features[3]: next-context
@@ -190,8 +191,19 @@ class Supervised:
                     senses.append(0)
                 senses.append(0)
                 # Call the train line function to handle
-                print("Case " + str(a) + ": " + str(self.test_line(senselist[0], context, senses)) + " Correct Answer: " + str(senselist[2:]))
+                gen_answer = self.test_line(senselist[0], context, senses)
+                cor_answer = senselist[2:]
+                #print("Case " + str(a) + ": " + str(self.test_line(senselist[0], context, senses)) + " Correct Answer: " + str(senselist[2:]))
+                mistakes = 0
+                for j in range(len(gen_answer)):
+                    if str(gen_answer[j]) != str(cor_answer[j]):
+                        #print(str(gen_answer[j]) + " " + str(cor_answer[j]))
+                        mistakes+=1
+                if mistakes > 0:
+                    b+=1
+                print("Case " + str(a) + " mistakes: " + str(mistakes))
                 a+=1
+            print("Accuracy is: " + str((a-b)/a) + "%")
 
     def print_dict(self):
         for w in self.wsd.keys():
@@ -203,8 +215,8 @@ class Supervised:
 print("Smoothing factor: " + str(smoothing))
 print("Threshold: " + str(thres))
 s = Supervised()
-s.train("debug_training.data")
-s.test("debug_test.data")
+s.train("validation_training.data")
+s.test("validation_test.data")
 #print(str(s.test_line("begin", "Dear Harsnet , he wrote , this is a message from the past . I just want to tell you . Goldberg , pushing aside pad and pen , drew the little typewriter towards him and to type again . The procreative metaphor , he typed ( as Harsnet had written ) , has been the bane of art . It is not enough , wrote Harsnet , to deny that one conceives a work of art and brings it forth as a child is conceived and brought forth into the world .", [0, 0, 0, 0, 0])))
 #begin.v 0 1 0 0 0 @ Dear Harsnet , he wrote , this is a message from the past . I just want to tell you . Goldberg , pushing aside pad and pen , drew the little typewriter towards him and @began@ to type again . The procreative metaphor , he typed ( as Harsnet had written ) , has been the bane of art . It is not enough , wrote Harsnet , to deny that one conceives a work of art and brings it forth as a child is conceived and brought forth into the world .
 '''
