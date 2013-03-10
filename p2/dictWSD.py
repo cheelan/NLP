@@ -1,16 +1,20 @@
+from nltk.corpus import wordnet
+import re
+
 class dictWSD:
     dictionary = None
     
     def __init__(self):
         print 'Initialize'
-        self.dictionary = {}
+        self.dictionary = self.genXmlDictionary('Dictionary.xml')
+        #print self.dictionary
+        #self.dictionary = {}
         #self.dictionary['word1'] = ['A very fast candy bar', 'A very fast cat']
         #self.dictionary['word2'] = ['A very fast car file is very fast candy']
         #self.dictionary['word2'] = ['A very slow dog', 'A slow but very fat slow dog candy bar']
-        self.dictionary['fall'] = ['The season of sadness', 'The action of anti elevating', 'Hey Casey, what is up?']
-        self.dictionary['flying'] = ['The action of elevating above', 'Some kind of fishing', 'Being too cool for school']
-        self.dictionary['birds'] = ['Badminton stuff that goes above', 'Mammals that love the action of elevating above']
-        
+        #self.dictionary['fall'] = ['The season of sadness', 'The action of anti elevating', 'Hey Casey, what is up?']
+        #self.dictionary['flying'] = ['The action of elevating above', 'Some kind of fishing', 'Being too cool for school']
+        #self.dictionary['birds'] = ['Badminton stuff that goes above', 'Mammals that love the action of elevating above']
         
     def WSD(self, target, context):             # executes WSD for the target word in a context
         features = context.split(' ')
@@ -43,7 +47,8 @@ class dictWSD:
         scores = [0]
         runningScore = 0
         targetSenses = self.dictionary[target]
-        featureSenses = self.dictionary[feature]            # add checks to see if it exists
+        #featureSenses = self.dictionary[feature]            # add checks to see if it exists
+        featureSenses = self.define_word(self.dictionary, feature)
         
         for tSenses in targetSenses:
             runningScore = 0
@@ -87,7 +92,42 @@ class dictWSD:
             tWordCounter= retain;
         return score
         
+    #Returns a list of the definitions of all senses/synonyms of a word
+    def define_word(self, d, word):
+        try:
+            xmldef = self.xml_definition(d,word)
+            if len(xmldef) > 0:
+                return xmldef
+        except:
+            synsets = wordnet.synsets(word)
+            definitions = list()
+            for s in synsets:
+                definitions.append(s.definition)
+            return definitions
+
+    def genXmlDictionary(self, file):
+        xml = open(file).read()
+        dictionary = {}
+
+        item_re = re.compile('item="([^"]*)"')
+        #synset_re = re.compile('synset="([^"]*)"')
+        gloss_re = re.compile('gloss="([^"]*)"')
+
+        entries = xml.split("lexelt")
+        for i in range(1, len(entries), 2):
+            item = item_re.findall(entries[i])
+            item = (item[0].split("."))[0]
+            definitions = gloss_re.findall(entries[i])
+            #syns = synset_re.findall(entries[i])
+            #dictionary[item] = (definitions, syns)
+            dictionary[item] = definitions
+        return dictionary
+
+    #Returns the definitions of a word in the XML dictionary, or [] or something if it isn't defined
+    def xml_definition(self, d, word):
+        return d[word]
+        
 d = dictWSD()
-d.WSD('fall', 'flying birds')       # output = each list is a list of scores for each sense in the target overlapping with one feature
+d.WSD('activate', 'is a dog')       # output = each list is a list of scores for each sense in the target overlapping with one feature
 #print d.compareWords('a b c d e', 'b b c a f')
 #print d.compareWords('A very fast candy bar', 'A very fast car file is very fast candy')
