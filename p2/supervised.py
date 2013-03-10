@@ -1,8 +1,9 @@
-import sys, itertools, copy, random, nltk, os, re, math, string
+import sys, nltk, re, math, string
 from nltk.stem.porter import PorterStemmer
 
 #Factor for +k smoothing
 smoothing = .01
+allowed_pos = ["FW", "JJ", "JJR", "JJS", "NN", "NNS", "NNP", "NNPS", "RB", "RBR", "RBS", "VB", "VBD", "VBG", "VBN", "VBP", "VBZ"]
 
 class Word:
     total_count = smoothing
@@ -85,21 +86,20 @@ class Supervised:
         return float(sense_count) / float(word_count)
 
     #Given a line, fill in the nested dictionary
-    def train_line(self, context, target, senses):
+    def train_line(self, target, context, senses):
         #Convert context to feature words
         features = nltk.tokenize.regexp_tokenize(context, r'\w+')
-        filtered_features = list()
-        '''
         #Perforning feature filtering based on part of speach tag. 
+        filtered_features = list()
         result = nltk.pos_tag(features)
-        print(result)
-        '''
-        '''
+        for i in range(len(result)):
+            if str(result[i][1]) in allowed_pos:
+                filtered_features.append(result[i][0])
+        features = filtered_features
         #Performing stemming on feature words
         ps = PorterStemmer()
         for i in range(len(features)):
             features[i] = ps.stem(features[i])
-        '''
         #Lookup target in the dictionary
         if target not in self.wsd:
             self.wsd[target] = Word()
@@ -129,8 +129,7 @@ class Supervised:
                     if senselist[i] == "1":
                         senses.append(i-3)
                 # Call the train line function to handle
-                self.train_line(context, senselist[0], senses)
-
+                self.train_line(senselist[0], context, senses)
 
     #Returns all senses that are good
     #Senses: List of 0s
@@ -140,7 +139,20 @@ class Supervised:
         ans_list.append(0) #First entry is a no-answer
         thres = 0.0
         sense_num = 0 
-        features = context.split(" ")
+        #Convert context to feature words
+        features = nltk.tokenize.regexp_tokenize(context, r'\w+')
+        #Perforning feature filtering based on part of speach tag. 
+        filtered_features = list()
+        result = nltk.pos_tag(features)
+        for i in range(len(result)):
+            if str(result[i][1]) in allowed_pos:
+                filtered_features.append(result[i][0])
+        features = filtered_features
+        #Performing stemming on feature words
+        ps = PorterStemmer()
+        for i in range(len(features)):
+            features[i] = ps.stem(features[i])
+        #Compare features with sense data
         if target not in self.wsd:
             print("ERROR: " + target + " not in dictionary")
             pass
@@ -154,6 +166,30 @@ class Supervised:
             sense_num += 1
         return ans_list
 
+    #Given a train file, fill in the nested dictionary
+    def test(self, filename):
+        data = open(filename, 'r')
+        if (data == None):
+            print("Error: Testing file not found")
+        else:
+            data = data.readlines()
+            a = 1
+            for line in data:
+                #Convert text into partitions. #features[0]: word.pos t0 t1 ... tk
+                #features[1]: prev-context, features[2]: head, features[3]: next-context
+                features = line.lower().split("@")
+                # Spliting of features[0] into components and combining of prev and next context into context
+                senselist= re.findall('\w+', features[0])
+                context = features[1] + features[3]
+                # Handling of senselist
+                senses = list()
+                for i in range(3,len(senselist)):
+                    senses.append(0)
+                senses.append(0)
+                # Call the train line function to handle
+                print("Case " + str(a) + ": " + str(self.test_line(senselist[0], context, senses)))
+                a+=1
+
     def print_dict(self):
         for w in self.wsd.keys():
             print("Word: " + w )
@@ -161,10 +197,12 @@ class Supervised:
             for s in self.wsd[w].senses:
                 print(str(s) + ":\t" + str(self.wsd[w].senses[s].featureUnigram))
 
+print("Smoothing factor: " + str(smoothing))
 s = Supervised()
-s.train("testing_data.data")
-print(str(s.test_line("begin", "There is the clearing of the room , the removal of any trace of what had previously filled it . There is the laying by of all the necessary materials . Not , he wrote ( and Goldberg went on typing ) , that here in London one is cut off from such supplies in the normal course of events , but that work cannot until one knows one will not have to bother with such things , for a while at least . It is not a question , he wrote , of drawing up an inventory of all that is required , because that suggests that one can know exactly what will be required . Everything possible must be done , he wrote , and yet it must be as though nothing had been done.", [0, 0, 0, 0, 0])))
-#begin.v 0 0 1 0 0 @ There is the clearing of the room , the removal of any trace of what had previously filled it . There is the laying by of all the necessary materials . Not , he wrote ( and Goldberg went on typing ) , that here in London one is cut off from such supplies in the normal course of events , but that work cannot @begin@ until one knows one will not have to bother with such things , for a while at least . It is not a question , he wrote , of drawing up an inventory of all that is required , because that suggests that one can know exactly what will be required . Everything possible must be done , he wrote , and yet it must be as though nothing had been done .
+s.train("debug_training.data")
+s.test("debug_test.data")
+#print(str(s.test_line("begin", "Dear Harsnet , he wrote , this is a message from the past . I just want to tell you . Goldberg , pushing aside pad and pen , drew the little typewriter towards him and to type again . The procreative metaphor , he typed ( as Harsnet had written ) , has been the bane of art . It is not enough , wrote Harsnet , to deny that one conceives a work of art and brings it forth as a child is conceived and brought forth into the world .", [0, 0, 0, 0, 0])))
+#begin.v 0 1 0 0 0 @ Dear Harsnet , he wrote , this is a message from the past . I just want to tell you . Goldberg , pushing aside pad and pen , drew the little typewriter towards him and @began@ to type again . The procreative metaphor , he typed ( as Harsnet had written ) , has been the bane of art . It is not enough , wrote Harsnet , to deny that one conceives a work of art and brings it forth as a child is conceived and brought forth into the world .
 '''
 s.print_dict()
 print(str(s.test_line("begin", "I need to begin to pay off the money I owe.", [0, 0, 0, 0, 0])))
