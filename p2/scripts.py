@@ -44,8 +44,25 @@ def parse_target(string):
             targets.append(split[i])
     return targets
 
-dictionary = genXmlDictionary('Dictionary.xml')
+def parse_training(file):
+    f = open(file)
+    lines = f.readlines()
+    parsed = list()
+    
+    for l in lines:
+        space_split = l.split(' ')
+        target = space_split[0][:-2]
+        at_split = l.split('@')
+        context = at_split[1:]
+        temp = ""
+        for c in context:
+            temp += c
+        parsed.append((target, temp))
+    return parsed
+
+print parse_training('debug_training.data')
+"""dictionary = genXmlDictionary('Dictionary.xml')
 
 for d in define_word(dictionary, "fish"):
     print "---"
-    print(d)
+    print(d)"""
