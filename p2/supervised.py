@@ -67,16 +67,19 @@ class Supervised:
             print("ERROR: " + str(sense) + " is not a valid sense")
             return -1
         features = self.wsd[target].senses[sense]
-        prob = self.get_initial_prob(target, sense)
+        init_prob = self.get_initial_prob(target, sense)
+        prob = 1.
         #Abstract this to another method
         #get the feature count count(f_j, s)
         sense_count = self.wsd[target].get_sense_count(sense)
         for f in context:
             feature_count = features.get_feature_count(f)
             #print( str(float(feature_count)) + " / " + str(float(sense_count)))
-            prob *= float(feature_count) / float(sense_count)
+            #prob *= feature_count / sense_count
+            prob += math.log10(float(feature_count) / float(sense_count))
         #return prob
-        return prob**(1. / float(len(context)))
+        return init_prob * (10**(prob * (1. / float(len(context)))))
+        #return prob**(1. / float(len(context)))
     
     def get_initial_prob(self, target, sense):
         sense_count = self.wsd[target].get_sense_count(sense)
@@ -137,7 +140,7 @@ class Supervised:
     def test_line(self, target, context, senses):
         ans_list = list()
         ans_list.append(0) #First entry is a no-answer
-        thres = 0.0
+        thres = 0.0019
         sense_num = 0 
         #Convert context to feature words
         features = nltk.tokenize.regexp_tokenize(context, r'\w+')
@@ -155,10 +158,10 @@ class Supervised:
         #Compare features with sense data
         if target not in self.wsd:
             print("ERROR: " + target + " not in dictionary")
-            pass
+            return
         for s in range(len(senses)-1):
             score = self.get_sense_prob(target, features, sense_num)
-            print("Sense Num: " + str(sense_num) + " Value: " + str(score))
+            #print("Sense Num: " + str(sense_num) + " Value: " + str(score))
             if score > thres:
                 ans_list.append(1)
             else:
