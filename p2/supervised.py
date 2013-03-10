@@ -2,7 +2,8 @@ import sys, nltk, re, math, string
 from nltk.stem.porter import PorterStemmer
 
 #Factor for +k smoothing
-smoothing = .01
+smoothing = 1.0
+thres = 0.02
 allowed_pos = ["FW", "JJ", "JJR", "JJS", "NN", "NNS", "NNP", "NNPS", "RB", "RBR", "RBS", "VB", "VBD", "VBG", "VBN", "VBP", "VBZ"]
 
 class Word:
@@ -140,7 +141,6 @@ class Supervised:
     def test_line(self, target, context, senses):
         ans_list = list()
         ans_list.append(0) #First entry is a no-answer
-        thres = 0.0019
         sense_num = 0 
         #Convert context to feature words
         features = nltk.tokenize.regexp_tokenize(context, r'\w+')
@@ -190,7 +190,7 @@ class Supervised:
                     senses.append(0)
                 senses.append(0)
                 # Call the train line function to handle
-                print("Case " + str(a) + ": " + str(self.test_line(senselist[0], context, senses)))
+                print("Case " + str(a) + ": " + str(self.test_line(senselist[0], context, senses)) + " Correct Answer: " + str(senselist[2:]))
                 a+=1
 
     def print_dict(self):
@@ -201,6 +201,7 @@ class Supervised:
                 print(str(s) + ":\t" + str(self.wsd[w].senses[s].featureUnigram))
 
 print("Smoothing factor: " + str(smoothing))
+print("Threshold: " + str(thres))
 s = Supervised()
 s.train("debug_training.data")
 s.test("debug_test.data")
