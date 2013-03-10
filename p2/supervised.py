@@ -65,11 +65,12 @@ class Supervised:
             print("ERROR: " + target + " not in dictionary")
             return -1
         if sense not in self.wsd[target].senses:
-            print("ERROR: " + str(sense) + " is not a valid sense")
-            return -1
+            #print("ERROR: " + str(sense) + " is not a valid sense")
+            #print(self.wsd[target].senses)
+            return 0.
         features = self.wsd[target].senses[sense]
         init_prob = self.get_initial_prob(target, sense)
-        prob = 1.
+        prob = 0.
         #Abstract this to another method
         #get the feature count count(f_j, s)
         sense_count = self.wsd[target].get_sense_count(sense)
@@ -134,6 +135,7 @@ class Supervised:
                         senses.append(i-3)
                 # Call the train line function to handle
                 self.train_line(senselist[0], context, senses)
+        print("Done training")
 
     #Returns all senses that are good
     #Senses: List of 0s
@@ -178,6 +180,7 @@ class Supervised:
             data = data.readlines()
             a = 0
             b = 0
+            mistakes = 0
             for line in data:
                 #Convert text into partitions. #features[0]: word.pos t0 t1 ... tk
                 #features[1]: prev-context, features[2]: head, features[3]: next-context
@@ -194,16 +197,16 @@ class Supervised:
                 gen_answer = self.test_line(senselist[0], context, senses)
                 cor_answer = senselist[2:]
                 #print("Case " + str(a) + ": " + str(self.test_line(senselist[0], context, senses)) + " Correct Answer: " + str(senselist[2:]))
-                mistakes = 0
+                
                 for j in range(len(gen_answer)):
                     if str(gen_answer[j]) != str(cor_answer[j]):
                         #print(str(gen_answer[j]) + " " + str(cor_answer[j]))
                         mistakes+=1
-                if mistakes > 0:
-                    b+=1
+                    a += 1
+                
                 print("Case " + str(a) + " mistakes: " + str(mistakes))
-                a+=1
-            print("Accuracy is: " + str((a-b)/a) + "%")
+                #a+=1
+            print("Accuracy is: " + str( float((a-mistakes))/float(a)) + "%")
 
     def print_dict(self):
         for w in self.wsd.keys():
