@@ -17,6 +17,7 @@ def genXmlDictionary(file):
     dictionary = {}
 
     item_re = re.compile('item="([^"]*)"')
+    #synset_re = re.compile('synset="([^"]*)"')
     gloss_re = re.compile('gloss="([^"]*)"')
 
     entries = xml.split("lexelt")
@@ -24,6 +25,8 @@ def genXmlDictionary(file):
         item = item_re.findall(entries[i])
         item = (item[0].split("."))[0]
         definitions = gloss_re.findall(entries[i])
+        #syns = synset_re.findall(entries[i])
+        #dictionary[item] = (definitions, syns)
         dictionary[item] = definitions
     return dictionary
 
