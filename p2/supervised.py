@@ -3,7 +3,7 @@ from nltk.stem.porter import PorterStemmer
 
 #Factor for +k smoothing
 smoothing = 1.0
-thres = 0.08
+thres = 0.0
 allowed_pos = ["FW", "JJ", "JJR", "JJS", "NN", "NNS", "NNP", "NNPS", "RB", "RBR", "RBS", "VB", "VBD", "VBG", "VBN", "VBP", "VBZ"]
 
 class Word:
@@ -19,16 +19,15 @@ class Word:
         else:
             return smoothing
 
-    def add_sense(self, sense):
-        self.senses[sense] = Sense()
-
     def add_features(self, sense, features):
         #Check if sense is in the dictionary
         if not sense in self.senses:
             self.senses[sense] = Sense()
         for f in features:
             self.senses[sense].add_feature(f)
+        #Update word/sense counts
         self.total_count += 1
+        self.senses[sense].occurrences += 1
 
 
 class Sense:
@@ -60,7 +59,9 @@ class Supervised:
 
     #target: the word to disambiguate
     #sense: An int between 0 and n-1, where n is the number of senses that the word has
-    def get_sense_prob(self, target, context, sense):
+    #returns the total probability of the sense given the target word, context and sense
+    def get_prob(self, target, context, sense):
+        #Error checking. 
         if target not in self.wsd:
             print("ERROR: " + target + " not in dictionary")
             return -1
@@ -68,33 +69,35 @@ class Supervised:
             #print("ERROR: " + str(sense) + " is not a valid sense")
             #print(self.wsd[target].senses)
             return 0.
-        features = self.wsd[target].senses[sense]
-        init_prob = self.get_initial_prob(target, sense)
-        prob = 0.
-        #Abstract this to another method
-        #get the feature count count(f_j, s)
-        sense_count = self.wsd[target].get_sense_count(sense)
-        for f in context:
-            feature_count = features.get_feature_count(f)
-            #print( str(float(feature_count)) + " / " + str(float(sense_count)))
-            #prob *= feature_count / sense_count
-            prob += math.log10(float(feature_count) / float(sense_count))
-        #return prob
-        return init_prob * (10**(prob * (1. / float(len(context)))))
-        #return prob**(1. / float(len(context)))
+        sense_prob = self.get_sense_prob(target, sense)
+        features_prob = self.get_features_prob(target, sense, context)
+        #Final probability calculation for the sense
+        return sense_prob * (10**(float(features_prob) / float(len(context))))
     
-    def get_initial_prob(self, target, sense):
+    #Returns the probability of the sense given the word. Used to be called init_prob
+    def get_sense_prob(self, target, sense):
         sense_count = self.wsd[target].get_sense_count(sense)
         word_count = self.wsd[target].total_count
         if word_count == 0:
             print("ERROR: No words in the dictionary")
         return float(sense_count) / float(word_count)
 
+    #Returns the probability of the context given the sense. Used to be in sense_prob.
+    def get_features_prob(self, target, sense, context):
+        features = self.wsd[target].senses[sense]
+        prob = 0.
+        #get the feature count count(f_j, s)
+        sense_count = self.wsd[target].get_sense_count(sense)
+        for f in context:
+            feature_count = features.get_feature_count(f)
+            prob += math.log10(float(feature_count) / float(sense_count))
+        return prob
+
     #Given a line, fill in the nested dictionary
     def train_line(self, target, context, senses):
         #Convert context to feature words
         features = nltk.tokenize.regexp_tokenize(context, r'\w+')
-        #Perforning feature filtering based on part of speach tag. 
+        #Perforning feature filtering based on part of speech tag. 
         filtered_features = list()
         result = nltk.pos_tag(features)
         for i in range(len(result)):
@@ -111,9 +114,7 @@ class Supervised:
         #Call add_features(context) on the entry
         for s in senses:
             self.wsd[target].add_features(s, features)
-            #Update word/sense counts
-            self.wsd[target].senses[s].occurrences += 1
-
+            
     #Given a train file, fill in the nested dictionary
     def train(self, filename):
         data = open(filename, 'r')
@@ -142,8 +143,6 @@ class Supervised:
     #@Return: Returns the senses list with 0s replaced by 1s
     def test_line(self, target, context, senses):
         ans_list = list()
-        ans_list.append(0) #First entry is a no-answer
-        sense_num = 0 
         #Convert context to feature words
         features = nltk.tokenize.regexp_tokenize(context, r'\w+')
         #Perforning feature filtering based on part of speach tag. 
@@ -161,18 +160,26 @@ class Supervised:
         if target not in self.wsd:
             print("ERROR: " + target + " not in dictionary")
             return
+        #Calculate sense probabilities for all senses
+        sense_num = 0 
         for s in range(len(senses)-1):
-            score = self.get_sense_prob(target, features, sense_num)
-            #print("Sense Num: " + str(sense_num) + " Value: " + str(score))
+            score = self.get_prob(target, features, sense_num)
+            print("Sense Num: " + str(sense_num) + " Value: " + str(score))             #DEBUG: print statement for sense probabilities
             if score > thres:
                 ans_list.append(1)
             else:
                 ans_list.append(0)
             sense_num += 1
+        #Dealing with initial entry if the program has no clue what to guess. 
+        if not any(ans_list):
+            ans_list.insert(0, 0)
+        else:
+            ans_list.insert(0, 1)
         return ans_list
 
     #Given a train file, fill in the nested dictionary
     def test(self, filename):
+        outputfile = open("results.txt", 'w+')
         data = open(filename, 'r')
         if (data == None):
             print("Error: Testing file not found")
@@ -190,23 +197,29 @@ class Supervised:
                 context = features[1] + features[3]
                 # Handling of senselist
                 senses = list()
-                for i in range(3,len(senselist)):
+                for i in range(2,len(senselist)):
                     senses.append(0)
-                senses.append(0)
                 # Call the train line function to handle
-                gen_answer = self.test_line(senselist[0], context, senses)
                 cor_answer = senselist[2:]
-                #print("Case " + str(a) + ": " + str(self.test_line(senselist[0], context, senses)) + " Correct Answer: " + str(senselist[2:]))
-                
+                results = self.test_line(senselist[0], context, senses)
+                print("Case " + str(a) + ": " + str(results) + " Correct Answer: " + str(cor_answer))     #DEBUG: print statement for final answer. 
+                '''
+                #Write output to file for Kaggle.
+                for piece in results:
+                    outputfile.write(str(piece)+"\n")
+                '''
+                '''
                 for j in range(len(gen_answer)):
                     if str(gen_answer[j]) != str(cor_answer[j]):
                         #print(str(gen_answer[j]) + " " + str(cor_answer[j]))
                         mistakes+=1
                     a += 1
-                
+                '''
+            '''
                 print("Case " + str(a) + " mistakes: " + str(mistakes))
                 #a+=1
             print("Accuracy is: " + str( float((a-mistakes))/float(a)) + "%")
+            '''
 
     def print_dict(self):
         for w in self.wsd.keys():
@@ -218,22 +231,5 @@ class Supervised:
 print("Smoothing factor: " + str(smoothing))
 print("Threshold: " + str(thres))
 s = Supervised()
-s.train("validation_training.data")
-s.test("validation_test.data")
-#print(str(s.test_line("begin", "Dear Harsnet , he wrote , this is a message from the past . I just want to tell you . Goldberg , pushing aside pad and pen , drew the little typewriter towards him and to type again . The procreative metaphor , he typed ( as Harsnet had written ) , has been the bane of art . It is not enough , wrote Harsnet , to deny that one conceives a work of art and brings it forth as a child is conceived and brought forth into the world .", [0, 0, 0, 0, 0])))
-#begin.v 0 1 0 0 0 @ Dear Harsnet , he wrote , this is a message from the past . I just want to tell you . Goldberg , pushing aside pad and pen , drew the little typewriter towards him and @began@ to type again . The procreative metaphor , he typed ( as Harsnet had written ) , has been the bane of art . It is not enough , wrote Harsnet , to deny that one conceives a work of art and brings it forth as a child is conceived and brought forth into the world .
-'''
-s.print_dict()
-print(str(s.test_line("begin", "I need to begin to pay off the money I owe.", [0, 0, 0, 0, 0])))
-'''
-'''
-s.train_line("I went fishing for some sea", "bass", [0])
-s.train_line("The line of the song is too weak", "bass", [1])
-s.print_dict()
-'''
-'''
-s.train_line("I went fishing for some sea", "bass", [0])
-s.train_line("sea fishing fish", "bass", [0])
-s.train_line("The line of the song is too weak", "bass", [1])
-print(str(s.test_line("bass", "I fishing sea fish apple", [0, 0, 0])))
-'''
+s.train("debug_training.data")
+s.test("debug_test.data")
