@@ -2,8 +2,8 @@ import sys, nltk, re, math, string
 from nltk.stem.porter import PorterStemmer
 
 #Factor for +k smoothing
-smoothing = 1.0
-thres = 0.0
+smoothing = .01
+thres = 0.03
 allowed_pos = ["FW", "JJ", "JJR", "JJS", "NN", "NNS", "NNP", "NNPS", "RB", "RBR", "RBS", "VB", "VBD", "VBG", "VBN", "VBP", "VBZ"]
 
 class Word:
@@ -164,7 +164,7 @@ class Supervised:
         sense_num = 0 
         for s in range(len(senses)-1):
             score = self.get_prob(target, features, sense_num)
-            print("Sense Num: " + str(sense_num) + " Value: " + str(score))             #DEBUG: print statement for sense probabilities
+            #print("Sense Num: " + str(sense_num) + " Value: " + str(score))             #DEBUG: print statement for sense probabilities
             if score > thres:
                 ans_list.append(1)
             else:
@@ -185,8 +185,8 @@ class Supervised:
             print("Error: Testing file not found")
         else:
             data = data.readlines()
-            a = 0
-            b = 0
+            case = 0
+            total_answers = 0
             mistakes = 0
             for line in data:
                 #Convert text into partitions. #features[0]: word.pos t0 t1 ... tk
@@ -202,24 +202,23 @@ class Supervised:
                 # Call the train line function to handle
                 cor_answer = senselist[2:]
                 results = self.test_line(senselist[0], context, senses)
-                print("Case " + str(a) + ": " + str(results) + " Correct Answer: " + str(cor_answer))     #DEBUG: print statement for final answer. 
+                #print("Case " + str(case) + ": " + str(results) + " Correct Answer: " + str(cor_answer))     #DEBUG: print statement for final answer. 
+                case+=1
                 '''
                 #Write output to file for Kaggle.
+                output_write = ''
                 for piece in results:
-                    outputfile.write(str(piece)+"\n")
+                    output_write += str(piece) + '\n'
+                outputfile.write(output_write)
                 '''
-                '''
-                for j in range(len(gen_answer)):
-                    if str(gen_answer[j]) != str(cor_answer[j]):
-                        #print(str(gen_answer[j]) + " " + str(cor_answer[j]))
+                #Generate statistics regarding results
+                for j in range(len(results)):
+                    if str(results[j]) != str(cor_answer[j]):
                         mistakes+=1
-                    a += 1
-                '''
-            '''
-                print("Case " + str(a) + " mistakes: " + str(mistakes))
-                #a+=1
-            print("Accuracy is: " + str( float((a-mistakes))/float(a)) + "%")
-            '''
+                    total_answers+=1
+            accuracy = float(total_answers-mistakes)/float(total_answers)
+            #print("Accuracy is: " + str(accuracy))
+            return accuracy
 
     def print_dict(self):
         for w in self.wsd.keys():
@@ -228,8 +227,15 @@ class Supervised:
             for s in self.wsd[w].senses:
                 print(str(s) + ":\t" + str(self.wsd[w].senses[s].featureUnigram))
 
-print("Smoothing factor: " + str(smoothing))
-print("Threshold: " + str(thres))
+autolog = open("autotestingresults.txt", 'w+')
+#print("Smoothing factor: " + str(smoothing))
+#print("Threshold: " + str(thres))
+thres = .01
+smoothing = .01
 s = Supervised()
-s.train("debug_training.data")
-s.test("debug_test.data")
+s.train("validation_training.data")
+#Automated testing
+while (thres < .5):
+    a = s.test("validation_test.data")
+    autolog.write("Smoothing factor: " + str(smoothing) + " Threshold: " + str(thres) + " Accuracy: " + str(a) + '\n')
+    thres+=.01
