@@ -1,4 +1,4 @@
-import sys, nltk, re, math, string
+import sys, nltk, re, math, string, pickle
 from nltk.stem.porter import PorterStemmer
 
 #Factor for +k smoothing
@@ -116,7 +116,12 @@ class Supervised:
             self.wsd[target].add_features(s, features)
             
     #Given a train file, fill in the nested dictionary
-    def train(self, filename):
+    def train(self, filename, importname=""):
+        if importname != "":
+            with open(importname, 'rb') as f:
+                self.wsd = pickle.load(f)
+                print("Loaded training file " + importname)
+                return
         data = open(filename, 'r')
         if (data == None):
             print("Error: Training file not found")
@@ -136,7 +141,11 @@ class Supervised:
                         senses.append(i-3)
                 # Call the train line function to handle
                 self.train_line(senselist[0], context, senses)
-        print("Done training")
+            print("Done training")
+            with open('supervised_training.pickle', 'wb') as f: 
+                pickle.dump(self.wsd, f)
+                print("Done pickling")
+        
 
     #Returns all senses that are good
     #Senses: List of 0s
@@ -180,6 +189,7 @@ class Supervised:
     #Given a train file, fill in the nested dictionary
     def test(self, filename):
         outputfile = open("results.txt", 'w+')
+        ones = 0
         data = open(filename, 'r')
         if (data == None):
             print("Error: Testing file not found")
@@ -216,6 +226,9 @@ class Supervised:
                     if str(results[j]) != str(cor_answer[j]):
                         mistakes+=1
                     total_answers+=1
+                    if (results[j] == "1"):
+                        ones += 1
+            print("Ones guessed: " + ones)
             accuracy = float(total_answers-mistakes)/float(total_answers)
             #print("Accuracy is: " + str(accuracy))
             return accuracy
@@ -233,9 +246,12 @@ autolog = open("autotestingresults.txt", 'w+')
 thres = .01
 smoothing = .01
 s = Supervised()
-s.train("validation_training.data")
+s.train("validation_training.data", "supervised_training.pickle")
+#s.train("validation_training.data")
 #Automated testing
-while (thres < .5):
+while (thres < .035):
     a = s.test("validation_test.data")
     autolog.write("Smoothing factor: " + str(smoothing) + " Threshold: " + str(thres) + " Accuracy: " + str(a) + '\n')
-    thres+=.01
+    print(("Smoothing factor: " + str(smoothing) + " Threshold: " + str(thres) + " Accuracy: " + str(a)))
+    print("")
+    thres+=.002
