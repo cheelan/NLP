@@ -133,7 +133,9 @@ class Supervised:
                 features = line.lower().split("@")
                 # Spliting of features[0] into components and combining of prev and next context into context
                 senselist= re.findall('\w+', features[0])
-                context = features[1] + features[3]
+                context = ""
+                for component in features[1::2]:
+                    context+=component
                 # Handling of senselist
                 senses = list()
                 for i in range(3,len(senselist)):
@@ -226,11 +228,11 @@ class Supervised:
                     if str(results[j]) != str(cor_answer[j]):
                         mistakes+=1
                     total_answers+=1
-                    if (results[j] == "1"):
-                        ones += 1
-            print("Ones guessed: " + ones)
+                    #if (results[j] == "1"):
+                        #ones += 1
+            #print("Ones guessed: " + ones)
             accuracy = float(total_answers-mistakes)/float(total_answers)
-            #print("Accuracy is: " + str(accuracy))
+            print("Accuracy is: " + str(accuracy))
             return accuracy
 
     def print_dict(self):
@@ -244,14 +246,17 @@ autolog = open("autotestingresults.txt", 'w+')
 #print("Smoothing factor: " + str(smoothing))
 #print("Threshold: " + str(thres))
 thres = .01
-smoothing = .01
+smoothing = .001
 s = Supervised()
-s.train("validation_training.data", "supervised_training.pickle")
-#s.train("validation_training.data")
+#Pickled Data Training
+#s.train("validation_training.data", "supervised_training.pickle")
+#Nonpickled Data Training
+s.train("validation_training.data")
 #Automated testing
+#while (smoothing < 1):
+#    autolog.write("Smoothing factor: " + str(smoothing) + '\n')
 while (thres < .035):
     a = s.test("validation_test.data")
-    autolog.write("Smoothing factor: " + str(smoothing) + " Threshold: " + str(thres) + " Accuracy: " + str(a) + '\n')
-    print(("Smoothing factor: " + str(smoothing) + " Threshold: " + str(thres) + " Accuracy: " + str(a)))
-    print("")
-    thres+=.002
+    autolog.write("Threshold: " + str(thres) + " Accuracy: " + str(a) + '\n')
+    thres+=.001
+#    smoothing*=10
