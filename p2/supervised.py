@@ -260,3 +260,4 @@ while (thres < .035):
     autolog.write("Threshold: " + str(thres) + " Accuracy: " + str(a) + '\n')
     thres+=.001
 #    smoothing*=10
+
