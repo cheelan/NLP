@@ -265,6 +265,17 @@ class Supervised:
             for s in self.wsd[w].senses:
                 print(str(s) + ":\t" + str(self.wsd[w].senses[s].featureUnigram))
 
+    #Used for the extension
+    #"Attempt" is a partial score
+    #Returns the sum of the squares of differences
+    def modified_score(self, attempt, correct):
+        if len(attempt) != len(correct):
+            print("ERROR: Attempted score is of different length from correct score")
+        score = 0.
+        for i in range(len(attempt)):
+            score += (attempt[i] - float(correct[i]))**2
+        return ((score / float(len(attempt)))**(0.5))
+
 #autolog = open("autotestingresults.txt", 'w+')
 #print("Smoothing factor: " + str(smoothing))
 #print("Threshold: " + str(thres))
@@ -273,8 +284,14 @@ thres = .007
 smoothing = .01
 
 s = Supervised()
+
+#Extension testing
+print(s.modified_score([.2, .5, .1, .5], [0, 1, 0, 1]))
+#End extension testing
+
 #Pickled Data Training
 s.train("Training Data.data", "supervised_training.pickle")
+
 #Nonpickled Data Training
 #s.train("Training Data.data")
 #Automated testing
