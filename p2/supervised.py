@@ -29,6 +29,26 @@ class Word:
         self.total_count += 1
         self.senses[sense].occurrences += 1
 
+    #Returns most frequently occurring sense. Used only for a base line, not the actual algorithm
+    def get_most_common_sense(self):
+        max_count = 0.
+        max_sense = -1
+        for (k, v) in self.senses:
+            if v.occurrences > max_count:
+                max_count = v.occurrences
+                max_sense = k
+        return max_sense
+
+    #Returns the most common sense in answer format ie [0; 1; 0; 0]
+    def get_common_sense_list(self):
+        ans = list()
+        best = self.get_most_common_sense()
+        for i in range(len(self.senses)-1):
+            if i == best:
+                ans.append(1)
+            else:
+                ans.append(0)
+        return ans
 
 class Sense:
     occurrences = smoothing
