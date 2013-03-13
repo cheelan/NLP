@@ -4,28 +4,26 @@ import re, nltk
 
 class dictWSD:
     dictionary = None
+    data = None
+    cor_answer = None
     
-    def __init__(self):
+    def __init__(self, file):
         print 'Initialize'
         self.dictionary = self.genXmlDictionary('Dictionary.xml')
         
-        
-    def main(self, file, threshold):
-        dictWSDResults = open("dictWSDResults.txt", 'w')
-        data = self.parse_data(file)
+        self.data = self.parse_data(file)
         
         #################### Finds the correct answer
         ### TAKE OUT ***
         ones = 0
         ans = open(file, 'r')
-        cor_answer = list()
+        self.cor_answer = list()
         if (ans == None):
             print("Error: Testing file not found")
         else:
             ans = ans.readlines()
             case = 0
-            total_answers = 0
-            mistakes = 0
+            
             for line in ans:
                 #Convert text into partitions. #features[0]: word.pos t0 t1 ... tk
                 #features[1]: prev-context, features[2]: head, features[3]: next-context
@@ -37,8 +35,8 @@ class dictWSD:
                 for i in range(2,len(senselist)):
                     senses.append(0)
                 # Call the train line function to handle
-                cor_answer.append(senselist[2:])
-                #print("Case " + str(case) + ": " + str(results) + " Correct Answer: " + str(cor_answer))     #DEBUG: print statement for final answer. 
+                self.cor_answer.append(senselist[2:])
+                #print("Case " + str(case) + ": " + str(results) + " Correct Answer: " + str(self.cor_answer))     #DEBUG: print statement for final answer. 
                 case+=1
                 '''
                 #Write output to file for Kaggle.
@@ -50,12 +48,19 @@ class dictWSD:
                 
         print 'finished cor_answer'
         #########################
-
+        
+        
+    def main(self, file, threshold):
+        dictWSDResults = open("dictWSDResults.txt", 'w')
 
         ourans = list()
         
-        for (target, context) in data:
-            results = self.WSD(target, context)
+        total_answers = 0
+        mistakes = 0
+            
+        for (target, context) in self.data:
+            #results = self.WSD(target, context)
+            results = self.WSD(target, context, threshold)
             ourans.append(results)          ### TAKE OUT ***
             #for result in results:
                 #dictWSDResults.write(str(result) + '\n')
@@ -68,7 +73,7 @@ class dictWSD:
         #Generate statistics regarding results
         for j in range(len(ourans)):
             for a in range(len(ourans[j])):
-                if str(ourans[j][a]) != str(cor_answer[j][a]):
+                if str(ourans[j][a]) != str(self.cor_answer[j][a]):
                     mistakes+=1
                 total_answers+=1
             #if (results[j] == "1"):
@@ -87,7 +92,8 @@ class dictWSD:
         #self.dictionary['flying'] = ['The action of elevating above', 'Some kind of fishing', 'Being too cool for school']
         #self.dictionary['birds'] = ['Badminton stuff that goes above', 'Mammals that love the action of elevating above']
         
-    def WSD(self, target, context):             # executes WSD for the target word in a context
+    #def WSD(self, target, context):             # executes WSD for the target word in a context
+    def WSD(self, target, context, threshold):             # executes WSD for the target word in a context
         features = self.context_filter(context.split(' '))
         test = None
         results = None
@@ -108,6 +114,8 @@ class dictWSD:
         maxIndex = 0
         maxValue = 0
         
+        #highest score only
+        '''
         for s in range(len(test)):
             if test[s]>maxValue:
                 maxIndex = s
@@ -116,7 +124,7 @@ class dictWSD:
             if k!=maxIndex:
                 results[k]=0
             else:
-                results[k]=1
+                results[k]=1'''
         
         # threshold checking
         '''for t in range(len(test)):
@@ -126,6 +134,15 @@ class dictWSD:
                 blah[t] = 0'''
         #print 'final: '
         #print blah
+        
+        # uses a threshold
+        for s in range(len(test)):
+            if test[s]>threshold:
+                results[s] = 1
+                #results[s] = 0
+            else:
+                results[s] = 0
+        
         
         ###TAKE THIS OUT
         results = test
@@ -171,7 +188,8 @@ class dictWSD:
                             break
                         featureNextWord= fWordList[fWordCounter];
                         targetNextWord = tWordList[tWordCounter];
-                    score = score + (((2.0)**checkWordsCount)/len(fWordList));
+                    score = score + (((2.0)*checkWordsCount)/len(fWordList));
+                    #score = score + (((2.0)**checkWordsCount)/len(fWordList));
                     #score = score + ((2.0)**checkWordsCount);
                     checkWordsCount=0;
                 else:
@@ -264,9 +282,12 @@ class dictWSD:
 
 #parse_training('debug_training.data')        
 #d = dictWSD('Test Data.data')
-d = dictWSD()
+d = dictWSD('validation_test.data')
 
-d.main('validation_test.data', 10)
+for i in range(40,51):
+    print 'range'
+    print i
+    d.main('validation_test.data', i)
 
 '''lemma = WordNetLemmatizer()
 input_str = ""
