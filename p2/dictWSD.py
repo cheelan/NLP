@@ -57,13 +57,25 @@ class dictWSD:
         
         total_answers = 0
         mistakes = 0
+        
+        allzeros = 1
             
         for (target, context) in self.data:
             #results = self.WSD(target, context)
+            
             results = self.WSD(target, context, threshold)
+            
             ourans.append(results)          ### TAKE OUT ***
+            if 1 in results:
+                allzeros = 0
             #for result in results:
                 #dictWSDResults.write(str(result) + '\n')
+                
+        print 'allzeros:'
+        if allzeros==0:
+            print 'has a 1'
+        else:
+            print 'has all zeros'
                 
         
         
@@ -284,7 +296,7 @@ class dictWSD:
 #d = dictWSD('Test Data.data')
 d = dictWSD('validation_test.data')
 
-for i in range(40,51):
+for i in range(63,65):
     print 'range'
     print i
     d.main('validation_test.data', i)
