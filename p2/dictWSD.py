@@ -5,9 +5,18 @@ import re
 class dictWSD:
     dictionary = None
     
-    def __init__(self):
+    def __init__(self, file):
         print 'Initialize'
         self.dictionary = self.genXmlDictionary('Dictionary.xml')
+        dictWSDResults = open("dictWSDResults.txt", 'w')
+        data = self.parse_data(file)
+        
+        for (target, context) in data:
+            results = self.WSD(target, context)
+            for result in results:
+                dictWSDResults.write(str(result) + '\n')
+        
+        
         #print self.dictionary
         #self.dictionary = {}
         #self.dictionary['word1'] = ['A very fast candy bar', 'A very fast cat']
@@ -20,29 +29,44 @@ class dictWSD:
     def WSD(self, target, context):             # executes WSD for the target word in a context
         features = context.split(' ')
         test = None
-        blah = None
+        results = None
         
         for feature in features:
             temp = self.compareWords(target, feature)
-            print feature
-            print temp
+            #print feature
+            #print temp
             if test==None:
                 test = temp
-                blah = temp     # take out
+                results = temp     # take out
             else:
                 for i in range(len(test)):
                     test[i] = test[i]+temp[i]
-        print 'sum: '
-        print test
+        #print 'sum: '
+        #print test
+        
+        maxIndex = 0
+        maxValue = 0
+        
+        for s in range(len(test)):
+            if test[s]>maxValue:
+                maxIndex = s
+                maxValue = test[s]
+        for k in range(len(results)):
+            if k!=maxIndex:
+                results[k]=0
+            else:
+                results[k]=1
         
         # threshold checking
-        for t in range(len(test)):
+        '''for t in range(len(test)):
             if test[t]>50:
                 blah[t] = 1
             else:
-                blah[t] = 0
-        print 'final: '
-        print blah
+                blah[t] = 0'''
+        #print 'final: '
+        #print blah
+        
+        return results
                 
     def compareWords(self, target, feature):    # compares the target word to a context feature
         scores = [0]
@@ -128,29 +152,47 @@ class dictWSD:
     def xml_definition(self, d, word):
         return d[word]
 
-    def parse_training(self, file):
-    f = open(file)
-    lines = f.readlines()
-    parsed = list()
-    
-    for l in lines:
-        space_split = l.split(' ')
-        target = space_split[0][:-2]
-        at_split = l.split('@')
-        context = at_split[1:]
-        temp = ""
-        for c in context:
-            temp += c
-        parsed.append((target, temp))
-    return parsed
+    def parse_data(self, file):
+        f = open(file)
+        lines = f.readlines()
+        parsed = list()
+        
+        for l in lines:
+            space_split = l.split(' ')
+            target = space_split[0][:-2]
+            at_split = l.split('@')
+            context = at_split[1:]
+            temp = ""
+            for c in context:
+                temp += c
+            parsed.append((target, temp))
+        return parsed
+        
+    def POSfilter(self, line):
+        #Convert context to feature words
+        features = nltk.tokenize.regexp_tokenize(context, r'\w+')
+        #Perforning feature filtering based on part of speech tag.
+        filtered_features = list()
+        result = nltk.pos_tag(features)
+        for i in range(len(result)):
+            if str(result[i][1]) in allowed_pos:
+                filtered_features.append(result[i][0])
+        features = filtered_features
+        #Performing stemming on feature words
+        ps = PorterStemmer()
+        for i in range(len(features)):
+            features[i] = ps.stem(features[i])
+        return features
 
 #parse_training('debug_training.data')        
-d = dictWSD()
-lemma = WordNetLemmatizer()
+d = dictWSD('Test Data.data')
+
+'''lemma = WordNetLemmatizer()
 input_str = ""
 for word in 'is a dog':
     input_str += lemma.lemmatize(word)
-d.WSD(lemma.lemmatize('activate'), input_str)
+d.WSD(lemma.lemmatize('activate'), input_str)'''
+
 #d.WSD('activate', 'is a dog')       output = each list is a list of scores for each sense in the target overlapping with one feature
 #print d.compareWords('a b c d e', 'b b c a f')
 #print d.compareWords('A very fast candy bar', 'A very fast car file is very fast candy')
