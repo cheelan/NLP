@@ -65,9 +65,11 @@ class dictWSD:
             
             results = self.WSD(target, context, threshold)
             
+            ###
             ourans.append(results)          ### TAKE OUT ***
             if 1 in results:
                 allzeros = 0
+            ###
             #for result in results:
                 #dictWSDResults.write(str(result) + '\n')
                 
@@ -148,13 +150,26 @@ class dictWSD:
         #print blah
         
         # uses a threshold
+        '''
         for s in range(len(test)):
             if test[s]>threshold:
                 results[s] = 1
                 #results[s] = 0
             else:
                 results[s] = 0
+        '''
         
+        # find max and then take a percentage as a threshold
+        # hack: for now treat the threshold number as a percentage
+        for s in range(len(test)):
+            if test[s]>maxValue:
+                maxValue = test[s]
+        maxValue = maxValue * threshold / 100
+        for k in range(len(results)):
+            if test[k]>maxValue:
+                results[k] = 1
+            else:
+                results[k] = 0
         
         ###TAKE THIS OUT
         results = test
@@ -248,6 +263,8 @@ class dictWSD:
     def xml_definition(self, d, word):
         return d[word]
 
+    # Joe's code
+    '''
     def parse_data(self, file):
         f = open(file)
         lines = f.readlines()
@@ -262,6 +279,26 @@ class dictWSD:
             for c in context:
                 temp += c
             parsed.append((target, temp))
+        return parsed
+    '''
+    
+    # Alex's code
+    def parse_data(self, file):
+        f = open(file)
+        data = f.readlines()
+        parsed = list()
+        
+        for line in data:
+            #Convert text into partitions. #features[0]: word.pos t0 t1 ... tk
+            #features[1]: prev-context, features[2]: head, features[3]: next-context
+            features = line.lower().split("@")
+            # Spliting of features[0] into components and combining of prev and next context into context
+            senselist= re.findall('\w+', features[0])
+            context = ""
+            for component in features[1::2]:
+                context+=component
+            parsed.append((senselist[0], context))
+            
         return parsed
         
     # code from Alex
@@ -296,7 +333,7 @@ class dictWSD:
 #d = dictWSD('Test Data.data')
 d = dictWSD('validation_test.data')
 
-for i in range(63,65):
+for i in range(86,100):
     print 'range'
     print i
     d.main('validation_test.data', i)
