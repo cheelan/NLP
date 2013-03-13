@@ -150,18 +150,18 @@ class dictWSD:
         #print blah
         
         # uses a threshold
-        '''
+        
         for s in range(len(test)):
             if test[s]>threshold:
                 results[s] = 1
                 #results[s] = 0
             else:
                 results[s] = 0
-        '''
+        
         
         # find max and then take a percentage as a threshold
         # hack: for now treat the threshold number as a percentage
-        for s in range(len(test)):
+        '''for s in range(len(test)):
             if test[s]>maxValue:
                 maxValue = test[s]
         maxValue = maxValue * threshold / 100
@@ -169,10 +169,10 @@ class dictWSD:
             if test[k]>maxValue:
                 results[k] = 1
             else:
-                results[k] = 0
+                results[k] = 0'''
         
         ###TAKE THIS OUT
-        results = test
+        #results = test
         ###
         return results
                 
@@ -333,7 +333,7 @@ class dictWSD:
 #d = dictWSD('Test Data.data')
 d = dictWSD('validation_test.data')
 
-for i in range(86,100):
+for i in range(20,22):
     print 'range'
     print i
     d.main('validation_test.data', i)
