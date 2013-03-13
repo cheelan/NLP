@@ -43,7 +43,7 @@ class Word:
     def get_common_sense_list(self):
         ans = list()
         best = self.get_most_common_sense()
-        for i in range(len(self.senses)-1):
+        for i in range(len(self.senses)):
             if i == best:
                 ans.append(1)
             else:
@@ -124,7 +124,7 @@ class Supervised:
             if str(result[i][1]) in allowed_pos:
                 filtered_features.append(result[i][0])
         features = filtered_features
-        #Performing stemming on feature words
+        #Performing Porter stemming on feature words
         ps = PorterStemmer()
         for i in range(len(features)):
             features[i] = ps.stem(features[i])
@@ -192,26 +192,23 @@ class Supervised:
             print("ERROR: " + target + " not in dictionary")
             return
         #Calculate sense probabilities for all senses
-        sense_num = 0 
         max_score = 0.
         max_index = 0
         for s in range(len(senses)-1):
-            score = self.get_prob(target, features, sense_num)
-            #print("Sense Num: " + str(sense_num) + " Value: " + str(score))             #DEBUG: print statement for sense probabilities
+            score = self.get_prob(target, features, s)
+            #print("Sense Num: " + str(s) + " Value: " + str(score))             #DEBUG: print statement for sense probabilities
             '''
             #New system: Pick only the best sense
             if score > max:
-                max_index = sense_num + 1
+                max_index = s + 1
             ans_list.append(0)
             '''
-
             #Old system: Pick anything above a threshold     
             if score > thres:
                 ans_list.append(1)
             else:
                 ans_list.append(0)
-            sense_num += 1
-        ans_list.insert(0, 0)
+        ans_list.insert(0, 0)                           #UNORTHODOX.
         return ans_list
 
     #Given a train file, fill in the nested dictionary
@@ -232,7 +229,9 @@ class Supervised:
                 features = line.lower().split("@")
                 # Spliting of features[0] into components and combining of prev and next context into context
                 senselist= re.findall('\w+', features[0])
-                context = features[1] + features[3]
+                context = ""
+                for component in features[1::2]:
+                    context+=component
                 # Handling of senselist
                 senses = list()
                 for i in range(2,len(senselist)):
@@ -242,13 +241,11 @@ class Supervised:
                 results = self.test_line(senselist[0], context, senses)
                 #print("Case " + str(case) + ": " + str(results) + " Correct Answer: " + str(cor_answer))     #DEBUG: print statement for final answer. 
                 case+=1
-                '''
                 #Write output to file for Kaggle.
                 output_write = ''
                 for piece in results:
                     output_write += str(piece) + '\n'
                 outputfile.write(output_write)
-                '''
                 #Generate statistics regarding results
                 for j in range(len(results)):
                     if str(results[j]) != str(cor_answer[j]):
@@ -268,24 +265,24 @@ class Supervised:
             for s in self.wsd[w].senses:
                 print(str(s) + ":\t" + str(self.wsd[w].senses[s].featureUnigram))
 
-autolog = open("autotestingresults.txt", 'w+')
+#autolog = open("autotestingresults.txt", 'w+')
 #print("Smoothing factor: " + str(smoothing))
 #print("Threshold: " + str(thres))
 
-thres = .001
+thres = .007
 smoothing = .01
 
 s = Supervised()
 #Pickled Data Training
-#s.train("validation_training.data", "supervised_training.pickle")
+s.train("Training Data.data", "supervised_training.pickle")
 #Nonpickled Data Training
-s.train("validation_training.data", "supervised_training.pickle")
+#s.train("Training Data.data")
 #Automated testing
 #while (smoothing < 1):
 #    autolog.write("Smoothing factor: " + str(smoothing) + '\n')
-while (thres < .035):
-    a = s.test("validation_test.data")
-    autolog.write("Smoothing factor: " + str(smoothing) + " Threshold: " + str(thres) + " Accuracy: " + str(a) + '\n')
-    print(("Smoothing factor: \t" + str(smoothing) + "\t Threshold: \t" + str(thres) + "\t Accuracy: \t" + str(a)))
-    thres+=.001
+#while (thres < .035):
+a = s.test("Test Data.data")
+#autolog.write("Smoothing factor: " + str(smoothing) + " Threshold: " + str(thres) + " Accuracy: " + str(a) + '\n')
+#print(("Smoothing factor: \t" + str(smoothing) + "\t Threshold: \t" + str(thres) + "\t Accuracy: \t" + str(a)))
+    #thres+=.001
 
