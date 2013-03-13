@@ -173,19 +173,25 @@ class Supervised:
             return
         #Calculate sense probabilities for all senses
         sense_num = 0 
+        max_score = 0.
+        max_index = 0
         for s in range(len(senses)-1):
             score = self.get_prob(target, features, sense_num)
             #print("Sense Num: " + str(sense_num) + " Value: " + str(score))             #DEBUG: print statement for sense probabilities
+            '''
+            #New system: Pick only the best sense
+            if score > max:
+                max_index = sense_num + 1
+            ans_list.append(0)
+            '''
+
+            #Old system: Pick anything above a threshold     
             if score > thres:
                 ans_list.append(1)
             else:
                 ans_list.append(0)
             sense_num += 1
-        #Dealing with initial entry if the program has no clue what to guess. 
-        if not any(ans_list):
-            ans_list.insert(0, 0)
-        else:
-            ans_list.insert(0, 1)
+        ans_list.insert(0, 0)
         return ans_list
 
     #Given a train file, fill in the nested dictionary
@@ -245,19 +251,21 @@ class Supervised:
 autolog = open("autotestingresults.txt", 'w+')
 #print("Smoothing factor: " + str(smoothing))
 #print("Threshold: " + str(thres))
-thres = .01
-smoothing = .001
+
+thres = .001
+smoothing = .01
+
 s = Supervised()
 #Pickled Data Training
 #s.train("validation_training.data", "supervised_training.pickle")
 #Nonpickled Data Training
-s.train("validation_training.data")
+s.train("validation_training.data", "supervised_training.pickle")
 #Automated testing
 #while (smoothing < 1):
 #    autolog.write("Smoothing factor: " + str(smoothing) + '\n')
 while (thres < .035):
     a = s.test("validation_test.data")
-    autolog.write("Threshold: " + str(thres) + " Accuracy: " + str(a) + '\n')
+    autolog.write("Smoothing factor: " + str(smoothing) + " Threshold: " + str(thres) + " Accuracy: " + str(a) + '\n')
+    print(("Smoothing factor: \t" + str(smoothing) + "\t Threshold: \t" + str(thres) + "\t Accuracy: \t" + str(a)))
     thres+=.001
-#    smoothing*=10
 
