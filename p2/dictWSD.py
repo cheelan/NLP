@@ -41,8 +41,8 @@ class dictWSD:
             else:
                 for i in range(len(test)):
                     test[i] = test[i]+temp[i]
-        print 'sum: '
-        print test
+        ##print 'sum: '
+        ##print test
         
         maxIndex = 0
         maxValue = 0
@@ -107,7 +107,8 @@ class dictWSD:
                             break
                         featureNextWord= fWordList[fWordCounter];
                         targetNextWord = tWordList[tWordCounter];
-                    score = score+ (2)**checkWordsCount;
+                    score = score + (((2.0)**checkWordsCount)/len(fWordList));
+                    #score = score + ((2.0)**checkWordsCount);
                     checkWordsCount=0;
                 else:
                     fWordCounter = fWordCounter + 1;
@@ -115,7 +116,8 @@ class dictWSD:
             fWordCounter=0;
             retain =retain +1;
             tWordCounter= retain;
-        return score
+        #return score
+        return score/len(tWordList)
         
     #Returns a list of the definitions of all senses/synonyms of a word
     def define_word(self, d, word):
