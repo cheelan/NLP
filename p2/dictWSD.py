@@ -1,6 +1,6 @@
 from nltk.corpus import wordnet
 from nltk.stem.wordnet import WordNetLemmatizer
-import re
+import re, nltk
 
 class dictWSD:
     dictionary = None
@@ -27,7 +27,7 @@ class dictWSD:
         #self.dictionary['birds'] = ['Badminton stuff that goes above', 'Mammals that love the action of elevating above']
         
     def WSD(self, target, context):             # executes WSD for the target word in a context
-        features = context.split(' ')
+        features = self.context_filter(context.split(' '))
         test = None
         results = None
         
@@ -168,6 +168,7 @@ class dictWSD:
             parsed.append((target, temp))
         return parsed
         
+    # code from Alex
     def POSfilter(self, line):
         #Convert context to feature words
         features = nltk.tokenize.regexp_tokenize(context, r'\w+')
@@ -182,6 +183,17 @@ class dictWSD:
         ps = PorterStemmer()
         for i in range(len(features)):
             features[i] = ps.stem(features[i])
+        return features
+    
+    # written by Casey
+    def context_filter(self, context):
+        unwanted_pos=['CC','IN','DT']
+        filtered_features = list()
+        result = nltk.pos_tag(context)
+        for i in range(len(result)):
+            if str(result[i][1]) not in unwanted_pos:
+                filtered_features.append(result[i][0])
+        features = filtered_features
         return features
 
 #parse_training('debug_training.data')        
