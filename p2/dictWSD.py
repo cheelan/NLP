@@ -41,8 +41,8 @@ class dictWSD:
             else:
                 for i in range(len(test)):
                     test[i] = test[i]+temp[i]
-        #print 'sum: '
-        #print test
+        print 'sum: '
+        print test
         
         maxIndex = 0
         maxValue = 0
