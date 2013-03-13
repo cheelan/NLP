@@ -184,21 +184,14 @@ class Supervised:
                 max_index = sense_num + 1
             ans_list.append(0)
             '''
-            #Old system: Pick anything above a threshold
-            
+
+            #Old system: Pick anything above a threshold     
             if score > thres:
                 ans_list.append(1)
             else:
                 ans_list.append(0)
-            
             sense_num += 1
-        
-        #Dealing with initial entry if the program has no clue what to guess. 
-        if any(ans_list):
-            ans_list.insert(0, 0)
-        else:
-            #ans_list.insert(0, 1)
-            ans_list.insert(0, 0)
+        ans_list.insert(0, 0)
         return ans_list
 
     #Given a train file, fill in the nested dictionary
@@ -266,7 +259,7 @@ s = Supervised()
 #Pickled Data Training
 #s.train("validation_training.data", "supervised_training.pickle")
 #Nonpickled Data Training
-s.train("validation_training.data")
+s.train("validation_training.data", "supervised_training.pickle")
 #Automated testing
 #while (smoothing < 1):
 #    autolog.write("Smoothing factor: " + str(smoothing) + '\n')
@@ -274,6 +267,5 @@ while (thres < .035):
     a = s.test("validation_test.data")
     autolog.write("Smoothing factor: " + str(smoothing) + " Threshold: " + str(thres) + " Accuracy: " + str(a) + '\n')
     print(("Smoothing factor: \t" + str(smoothing) + "\t Threshold: \t" + str(thres) + "\t Accuracy: \t" + str(a)))
-    print("")
     thres+=.001
 
