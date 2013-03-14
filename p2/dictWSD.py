@@ -132,7 +132,7 @@ class dictWSD:
         maxValue = 0
         
         #highest score only
-        
+        '''
         for s in range(len(test)):
             if test[s]>maxValue:
                 maxIndex = s
@@ -142,6 +142,7 @@ class dictWSD:
                 results[k]=0
             else:
                 results[k]=1
+        '''
         
         # threshold checking
         '''for t in range(len(test)):
@@ -164,17 +165,17 @@ class dictWSD:
         
         # find max and then take a percentage as a threshold
         # hack: for now treat the threshold number as a percentage
-        '''
+        
         for s in range(len(test)):
             if test[s]>maxValue:
                 maxValue = test[s]
-        maxValue = maxValue * threshold / 100
+        maxValue = maxValue * threshold / 100.0
         for k in range(len(results)):
             if test[k]>maxValue:
                 results[k] = 1
             else:
                 results[k] = 0
-        '''
+        
         ###TAKE THIS OUT
         #results = test
         ###
@@ -376,20 +377,21 @@ class dictWSD:
 #parse_training('debug_training.data')        
 #d = dictWSD('Test Data.data')
 
+'''
 d = dictWSD('Test Data.data')
 d.main('Test Data.data', 90)
-
+'''
 
 '''
 d = dictWSD('validation_test.data')
 d.main('validation_test.data', 0)
 '''
 
-'''
-for i in range(39,50):
+
+for i in range(90,100):
     print 'range'
     print i
-    d.main('validation_test.data', i)'''
+    d.main('validation_test.data', i)
     
 #d.main('validation_test.data', 0)
 
