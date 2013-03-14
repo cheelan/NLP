@@ -3,7 +3,7 @@ from nltk.stem.porter import PorterStemmer
 
 #Factor for +k smoothing
 smoothing = .01
-thres = 0.03
+thres = 0.007
 allowed_pos = ["FW", "JJ", "JJR", "JJS", "NN", "NNS", "NNP", "NNPS", "RB", "RBR", "RBS", "VB", "VBD", "VBG", "VBN", "VBP", "VBZ"]
 
 class Word:
@@ -85,9 +85,8 @@ class Supervised:
         if target not in self.wsd:
             print("ERROR: " + target + " not in dictionary")
             return -1
+        #Previously unencountered sense. No data so return 0. 
         if sense not in self.wsd[target].senses:
-            #print("ERROR: " + str(sense) + " is not a valid sense")
-            #print(self.wsd[target].senses)
             return 0.
         sense_prob = self.get_sense_prob(target, sense)
         features_prob = self.get_features_prob(target, sense, context)
@@ -163,7 +162,7 @@ class Supervised:
                         senses.append(i-3)
                 # Call the train line function to handle
                 self.train_line(senselist[0], context, senses)
-            print("Done training")
+            print("Finished generating training data")
             with open('supervised_training.pickle', 'wb') as f: 
                 pickle.dump(self.wsd, f)
                 print("Done pickling")
@@ -176,7 +175,7 @@ class Supervised:
         ans_list = list()
         #Convert context to feature words
         features = nltk.tokenize.regexp_tokenize(context, r'\w+')
-        #Perforning feature filtering based on part of speach tag. 
+        #Perforning feature filtering based on part of speech tag. 
         filtered_features = list()
         result = nltk.pos_tag(features)
         for i in range(len(result)):
@@ -192,23 +191,13 @@ class Supervised:
             print("ERROR: " + target + " not in dictionary")
             return
         #Calculate sense probabilities for all senses
-        max_score = 0.
-        max_index = 0
         for s in range(len(senses)-1):
-            score = self.get_prob(target, features, s)
-            #print("Sense Num: " + str(s) + " Value: " + str(score))             #DEBUG: print statement for sense probabilities
-            '''
-            #New system: Pick only the best sense
-            if score > max:
-                max_index = s + 1
-            ans_list.append(0)
-            '''
-            #Old system: Pick anything above a threshold     
+            score = self.get_prob(target, features, s)   
             if score > thres:
                 ans_list.append(1)
             else:
                 ans_list.append(0)
-        ans_list.insert(0, 0)                           #UNORTHODOX.
+        ans_list.insert(0, 0)                           
         return ans_list
 
     #Given a train file, fill in the nested dictionary
@@ -220,7 +209,6 @@ class Supervised:
             print("Error: Testing file not found")
         else:
             data = data.readlines()
-            case = 0
             total_answers = 0
             mistakes = 0
             for line in data:
@@ -239,8 +227,6 @@ class Supervised:
                 # Call the train line function to handle
                 cor_answer = senselist[2:]
                 results = self.test_line(senselist[0], context, senses)
-                #print("Case " + str(case) + ": " + str(results) + " Correct Answer: " + str(cor_answer))     #DEBUG: print statement for final answer. 
-                case+=1
                 #Write output to file for Kaggle.
                 output_write = ''
                 for piece in results:
@@ -251,11 +237,7 @@ class Supervised:
                     if str(results[j]) != str(cor_answer[j]):
                         mistakes+=1
                     total_answers+=1
-                    #if (results[j] == "1"):
-                        #ones += 1
-            #print("Ones guessed: " + ones)
             accuracy = float(total_answers-mistakes)/float(total_answers)
-            print("Accuracy is: " + str(accuracy))
             return accuracy
 
     def print_dict(self):
@@ -276,30 +258,10 @@ class Supervised:
             score += (attempt[i] - float(correct[i]))**2
         return ((score / float(len(attempt)))**(0.5))
 
-#autolog = open("autotestingresults.txt", 'w+')
-#print("Smoothing factor: " + str(smoothing))
-#print("Threshold: " + str(thres))
-
-thres = .007
-smoothing = .01
-
 s = Supervised()
-
-#Extension testing
-print(s.modified_score([.2, .5, .1, .5], [0, 1, 0, 1]))
-#End extension testing
-
 #Pickled Data Training
 s.train("Training Data.data", "supervised_training.pickle")
-
 #Nonpickled Data Training
 #s.train("Training Data.data")
-#Automated testing
-#while (smoothing < 1):
-#    autolog.write("Smoothing factor: " + str(smoothing) + '\n')
-#while (thres < .035):
 a = s.test("Test Data.data")
-#autolog.write("Smoothing factor: " + str(smoothing) + " Threshold: " + str(thres) + " Accuracy: " + str(a) + '\n')
-#print(("Smoothing factor: \t" + str(smoothing) + "\t Threshold: \t" + str(thres) + "\t Accuracy: \t" + str(a)))
-    #thres+=.001
-
+print(("Smoothing factor: \t" + str(smoothing) + "\t Threshold: \t" + str(thres) + "\t Accuracy: \t" + str(a)))
