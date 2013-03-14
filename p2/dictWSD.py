@@ -18,7 +18,7 @@ class dictWSD:
         
         #################### Finds the correct answer
         ### TAKE OUT ***
-        
+        '''
         ones = 0
         ans = open(file, 'r')
         self.cor_answer = list()
@@ -44,7 +44,7 @@ class dictWSD:
                 case+=1
                 
         print 'finished cor_answer'
-        
+        '''
         #########################
         
         
@@ -82,7 +82,7 @@ class dictWSD:
         
         ############################ Compares against correct answer
         ### TAKE OUT ***
-        
+        '''
         print 'finished ourans'
         #Generate statistics regarding results
         for j in range(len(ourans)):
@@ -95,7 +95,7 @@ class dictWSD:
         #print("Ones guessed: " + ones)
         accuracy = float(total_answers-mistakes)/float(total_answers)
         print("Accuracy is: " + str(accuracy))
-        
+        '''
         #############################
         
         #print self.dictionary
@@ -193,10 +193,11 @@ class dictWSD:
             runningScore = 0
             
             ### pos filter of target sense
+            '''
             tFiltered = self.POSfilterToString(tSense)
             for fSenses in featureSenses:
                 runningScore += self.getScore(tFiltered, fSenses)     # add normalization here
-            
+            '''
             ### porter stemmer
             '''
             tStemmed = ps.stem(tSense)
@@ -206,10 +207,10 @@ class dictWSD:
             ###
             
             ### original
-            '''
+            
             for fSenses in featureSenses:
                 runningScore += self.getScore(tSense, fSenses)     # add normalization here
-            '''
+            
             ###
             scores.append(runningScore)                     # will change this later to match with the parsed dictionary
         
@@ -239,9 +240,10 @@ class dictWSD:
                             break
                         featureNextWord= fWordList[fWordCounter];
                         targetNextWord = tWordList[tWordCounter];
-                    score = score + (((2.0)*checkWordsCount)/len(fWordList));
+                    #score = score + (((2.0)*checkWordsCount)/len(fWordList));
                     #score = score + (((2.0)**checkWordsCount)/len(fWordList));
                     #score = score + ((2.0)**checkWordsCount);
+                    score = score + ((2.0)*checkWordsCount);
                     checkWordsCount=0;
                 else:
                     fWordCounter = fWordCounter + 1;
@@ -373,13 +375,16 @@ class dictWSD:
 
 #parse_training('debug_training.data')        
 #d = dictWSD('Test Data.data')
-'''
+
 d = dictWSD('Test Data.data')
 d.main('Test Data.data', 90)
-'''
 
+
+'''
 d = dictWSD('validation_test.data')
 d.main('validation_test.data', 0)
+'''
+
 '''
 for i in range(39,50):
     print 'range'
