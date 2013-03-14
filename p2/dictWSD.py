@@ -1,6 +1,9 @@
 from nltk.corpus import wordnet
 from nltk.stem.wordnet import WordNetLemmatizer
+from nltk.stem.porter import PorterStemmer
 import re, nltk
+
+allowed_pos = ["FW", "JJ", "JJR", "JJS", "NN", "NNS", "NNP", "NNPS", "RB", "RBR", "RBS", "VB", "VBD", "VBG", "VBN", "VBP", "VBZ"]
 
 class dictWSD:
     dictionary = None
@@ -15,7 +18,7 @@ class dictWSD:
         
         #################### Finds the correct answer
         ### TAKE OUT ***
-        '''
+        
         ones = 0
         ans = open(file, 'r')
         self.cor_answer = list()
@@ -41,7 +44,7 @@ class dictWSD:
                 case+=1
                 
         print 'finished cor_answer'
-        '''
+        
         #########################
         
         
@@ -79,7 +82,7 @@ class dictWSD:
         
         ############################ Compares against correct answer
         ### TAKE OUT ***
-        '''
+        
         print 'finished ourans'
         #Generate statistics regarding results
         for j in range(len(ourans)):
@@ -92,7 +95,7 @@ class dictWSD:
         #print("Ones guessed: " + ones)
         accuracy = float(total_answers-mistakes)/float(total_answers)
         print("Accuracy is: " + str(accuracy))
-        '''
+        
         #############################
         
         #print self.dictionary
@@ -106,7 +109,9 @@ class dictWSD:
         
     #def WSD(self, target, context):             # executes WSD for the target word in a context
     def WSD(self, target, context, threshold):             # executes WSD for the target word in a context
-        features = self.context_filter(context.split(' '))
+        #features = self.context_filter(context.split(' '))
+        features = self.POSfilter(context)
+        
         test = None
         results = None
         
@@ -127,7 +132,7 @@ class dictWSD:
         maxValue = 0
         
         #highest score only
-        '''
+        
         for s in range(len(test)):
             if test[s]>maxValue:
                 maxIndex = s
@@ -136,7 +141,7 @@ class dictWSD:
             if k!=maxIndex:
                 results[k]=0
             else:
-                results[k]=1'''
+                results[k]=1
         
         # threshold checking
         '''for t in range(len(test)):
@@ -182,10 +187,30 @@ class dictWSD:
         #featureSenses = self.dictionary[feature]            # add checks to see if it exists
         featureSenses = self.define_word(self.dictionary, feature)
         
-        for tSenses in targetSenses:
+        #ps = PorterStemmer()
+        
+        for tSense in targetSenses:
             runningScore = 0
+            
+            ### pos filter of target sense
+            tFiltered = self.POSfilterToString(tSense)
             for fSenses in featureSenses:
-                runningScore += self.getScore(tSenses, fSenses)     # add normalization here
+                runningScore += self.getScore(tFiltered, fSenses)     # add normalization here
+            
+            ### porter stemmer
+            '''
+            tStemmed = ps.stem(tSense)
+            for fSenses in featureSenses:
+                runningScore += self.getScore(tStemmed, fSenses)     # add normalization here
+            '''
+            ###
+            
+            ### original
+            '''
+            for fSenses in featureSenses:
+                runningScore += self.getScore(tSense, fSenses)     # add normalization here
+            '''
+            ###
             scores.append(runningScore)                     # will change this later to match with the parsed dictionary
         
         return scores
@@ -303,7 +328,7 @@ class dictWSD:
     # code from Alex
     def POSfilter(self, line):
         #Convert context to feature words
-        features = nltk.tokenize.regexp_tokenize(context, r'\w+')
+        features = nltk.tokenize.regexp_tokenize(line, r'\w+')
         #Perforning feature filtering based on part of speech tag.
         filtered_features = list()
         result = nltk.pos_tag(features)
@@ -316,6 +341,24 @@ class dictWSD:
         for i in range(len(features)):
             features[i] = ps.stem(features[i])
         return features
+        
+    def POSfilterToString(self, line):
+        #print 'pos filter to string'
+        output = ''
+        #Convert context to feature words
+        features = nltk.tokenize.regexp_tokenize(line, r'\w+')
+        #Perforning feature filtering based on part of speech tag.
+        filtered_features = list()
+        result = nltk.pos_tag(features)
+        for i in range(len(result)):
+            if str(result[i][1]) in allowed_pos:
+                filtered_features.append(result[i][0])
+        features = filtered_features
+        #Performing stemming on feature words
+        ps = PorterStemmer()
+        for i in range(len(features)):
+            output += ps.stem(features[i]) + ' '
+        return output
     
     # written by Casey
     def context_filter(self, context):
@@ -330,12 +373,13 @@ class dictWSD:
 
 #parse_training('debug_training.data')        
 #d = dictWSD('Test Data.data')
-
+'''
 d = dictWSD('Test Data.data')
 d.main('Test Data.data', 90)
+'''
 
-
-#d = dictWSD('validation_test.data')
+d = dictWSD('validation_test.data')
+d.main('validation_test.data', 0)
 '''
 for i in range(39,50):
     print 'range'
