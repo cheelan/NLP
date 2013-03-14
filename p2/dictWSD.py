@@ -9,6 +9,8 @@ class dictWSD:
     dictionary = None
     data = None
     cor_answer = None
+    sum_maximum  = 0
+    count_maximum = 0
     
     def __init__(self, file):       # take out file from parameters after taking out correct answer parsing
         print 'Initialize'
@@ -18,7 +20,7 @@ class dictWSD:
         
         #################### Finds the correct answer
         ### TAKE OUT ***
-        '''
+        
         ones = 0
         ans = open(file, 'r')
         self.cor_answer = list()
@@ -44,7 +46,7 @@ class dictWSD:
                 case+=1
                 
         print 'finished cor_answer'
-        '''
+        
         #########################
         
         
@@ -69,8 +71,11 @@ class dictWSD:
                 allzeros = 0
             ###
             
+            ######################### write to file
+            '''
             for result in results:
                 dictWSDResults.write(str(result) + '\n')
+            '''
                 
         print 'allzeros:'
         if allzeros==0:
@@ -82,7 +87,7 @@ class dictWSD:
         
         ############################ Compares against correct answer
         ### TAKE OUT ***
-        '''
+        
         print 'finished ourans'
         #Generate statistics regarding results
         for j in range(len(ourans)):
@@ -95,7 +100,17 @@ class dictWSD:
         #print("Ones guessed: " + ones)
         accuracy = float(total_answers-mistakes)/float(total_answers)
         print("Accuracy is: " + str(accuracy))
-        '''
+        
+        #############################
+        
+        #############################
+        ### TAKE OUT***
+        
+        print 'sum'
+        print self.sum_maximum
+        print 'average'
+        print self.sum_maximum / float(self.count_maximum)
+
         #############################
         
         #print self.dictionary
@@ -125,8 +140,9 @@ class dictWSD:
             else:
                 for i in range(len(test)):
                     test[i] = test[i]+temp[i]
-        ##print 'sum: '
-        ##print test
+        
+        print 'sum: '
+        print test
         
         maxIndex = 0
         maxValue = 0
@@ -169,12 +185,21 @@ class dictWSD:
         for s in range(len(test)):
             if test[s]>maxValue:
                 maxValue = test[s]
+        
+        self.count_maximum += 1
+        print self.count_maximum
+        print maxValue
+        self.sum_maximum += maxValue
+        
+        
         maxValue = maxValue * threshold / 100.0
         for k in range(len(results)):
             if test[k]>maxValue:
                 results[k] = 1
             else:
                 results[k] = 0
+                
+        ##############
         
         ###TAKE THIS OUT
         #results = test
@@ -222,7 +247,10 @@ class dictWSD:
         featureNextWord= "";
         targetNextWord= "";
         fWordList = featuredef.lower().split(" ")
-        tWordList = targetdef.lower().split(" ")
+        
+        #tWordList = targetdef.lower().split(" ")
+        tWordList = self.POSfilter(targetdef)
+        
         fWordCounter=0;
         score=0;
         tWordCounter=0;
@@ -241,10 +269,10 @@ class dictWSD:
                             break
                         featureNextWord= fWordList[fWordCounter];
                         targetNextWord = tWordList[tWordCounter];
-                    #score = score + (((2.0)*checkWordsCount)/len(fWordList));
+                    score = score + (((2.0)*checkWordsCount)/len(fWordList));
                     #score = score + (((2.0)**checkWordsCount)/len(fWordList));
                     #score = score + ((2.0)**checkWordsCount);
-                    score = score + ((2.0)*checkWordsCount);
+                    #score = score + ((2.0)*checkWordsCount);
                     checkWordsCount=0;
                 else:
                     fWordCounter = fWordCounter + 1;
@@ -377,21 +405,25 @@ class dictWSD:
 #parse_training('debug_training.data')        
 #d = dictWSD('Test Data.data')
 
+# KAGGLE
 '''
 d = dictWSD('Test Data.data')
 d.main('Test Data.data', 90)
 '''
 
+# validation
 '''
 d = dictWSD('validation_test.data')
 d.main('validation_test.data', 0)
 '''
 
-
-for i in range(90,100):
+# traverse through different thresholds
+d = dictWSD('validation_test.data')
+for i in range(90,91):
     print 'range'
     print i
     d.main('validation_test.data', i)
+    
     
 #d.main('validation_test.data', 0)
 
