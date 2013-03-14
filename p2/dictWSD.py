@@ -7,7 +7,7 @@ class dictWSD:
     data = None
     cor_answer = None
     
-    def __init__(self, file):
+    def __init__(self, file):       # take out file from parameters after taking out correct answer parsing
         print 'Initialize'
         self.dictionary = self.genXmlDictionary('Dictionary.xml')
         
@@ -15,6 +15,7 @@ class dictWSD:
         
         #################### Finds the correct answer
         ### TAKE OUT ***
+        '''
         ones = 0
         ans = open(file, 'r')
         self.cor_answer = list()
@@ -38,15 +39,9 @@ class dictWSD:
                 self.cor_answer.append(senselist[2:])
                 #print("Case " + str(case) + ": " + str(results) + " Correct Answer: " + str(self.cor_answer))     #DEBUG: print statement for final answer. 
                 case+=1
-                '''
-                #Write output to file for Kaggle.
-                output_write = ''
-                for piece in results:
-                    output_write += str(piece) + '\n'
-                outputfile.write(output_write)
-                '''
                 
         print 'finished cor_answer'
+        '''
         #########################
         
         
@@ -70,8 +65,9 @@ class dictWSD:
             if 1 in results:
                 allzeros = 0
             ###
-            #for result in results:
-                #dictWSDResults.write(str(result) + '\n')
+            
+            for result in results:
+                dictWSDResults.write(str(result) + '\n')
                 
         print 'allzeros:'
         if allzeros==0:
@@ -83,6 +79,7 @@ class dictWSD:
         
         ############################ Compares against correct answer
         ### TAKE OUT ***
+        '''
         print 'finished ourans'
         #Generate statistics regarding results
         for j in range(len(ourans)):
@@ -95,6 +92,7 @@ class dictWSD:
         #print("Ones guessed: " + ones)
         accuracy = float(total_answers-mistakes)/float(total_answers)
         print("Accuracy is: " + str(accuracy))
+        '''
         #############################
         
         #print self.dictionary
@@ -150,18 +148,19 @@ class dictWSD:
         #print blah
         
         # uses a threshold
-        
+        '''
         for s in range(len(test)):
             if test[s]>threshold:
                 results[s] = 1
                 #results[s] = 0
             else:
                 results[s] = 0
-        
+        '''
         
         # find max and then take a percentage as a threshold
         # hack: for now treat the threshold number as a percentage
-        '''for s in range(len(test)):
+        '''
+        for s in range(len(test)):
             if test[s]>maxValue:
                 maxValue = test[s]
         maxValue = maxValue * threshold / 100
@@ -169,8 +168,8 @@ class dictWSD:
             if test[k]>maxValue:
                 results[k] = 1
             else:
-                results[k] = 0'''
-        
+                results[k] = 0
+        '''
         ###TAKE THIS OUT
         #results = test
         ###
@@ -331,12 +330,19 @@ class dictWSD:
 
 #parse_training('debug_training.data')        
 #d = dictWSD('Test Data.data')
-d = dictWSD('validation_test.data')
 
-for i in range(20,22):
+d = dictWSD('Test Data.data')
+d.main('Test Data.data', 90)
+
+
+#d = dictWSD('validation_test.data')
+'''
+for i in range(39,50):
     print 'range'
     print i
-    d.main('validation_test.data', i)
+    d.main('validation_test.data', i)'''
+    
+#d.main('validation_test.data', 0)
 
 '''lemma = WordNetLemmatizer()
 input_str = ""
