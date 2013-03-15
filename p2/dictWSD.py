@@ -18,7 +18,7 @@ class dictWSD:
         
         self.data = self.parse_data(file)
         
-        #################### Finds the correct answer
+        #################### Finds the correct answer       VALIDATION
         ### TAKE OUT ***
         
         ones = 0
@@ -62,7 +62,8 @@ class dictWSD:
             
         for (target, context) in self.data:
             #results = self.WSD(target, context)
-            
+            #print 'target'
+            #print target
             results = self.WSD(target, context, threshold)
             
             ###
@@ -71,7 +72,7 @@ class dictWSD:
                 allzeros = 0
             ###
             
-            ######################### write to file
+            ######################### write to file         KAGGLE
             '''
             for result in results:
                 dictWSDResults.write(str(result) + '\n')
@@ -85,7 +86,7 @@ class dictWSD:
                 
         
         
-        ############################ Compares against correct answer
+        ############################ Compares against correct answer        VALIDATION
         ### TAKE OUT ***
         
         print 'finished ourans'
@@ -105,12 +106,12 @@ class dictWSD:
         
         #############################
         ### TAKE OUT***
-        
+        '''
         print 'sum'
         print self.sum_maximum
         print 'average'
         print self.sum_maximum / float(self.count_maximum)
-
+		'''
         #############################
         
         #print self.dictionary
@@ -129,8 +130,9 @@ class dictWSD:
         
         test = None
         results = None
-        
+
         for feature in features:
+            #print feature
             temp = self.compareWords(target, feature)
             #print feature
             #print temp
@@ -141,14 +143,14 @@ class dictWSD:
                 for i in range(len(test)):
                     test[i] = test[i]+temp[i]
         
-        print 'sum: '
-        print test
+        #print 'sum: '
+        #print test
         
         maxIndex = 0
         maxValue = 0
         
         #highest score only
-        '''
+        
         for s in range(len(test)):
             if test[s]>maxValue:
                 maxIndex = s
@@ -158,7 +160,7 @@ class dictWSD:
                 results[k]=0
             else:
                 results[k]=1
-        '''
+        
         
         # threshold checking
         '''for t in range(len(test)):
@@ -181,7 +183,7 @@ class dictWSD:
         
         # find max and then take a percentage as a threshold
         # hack: for now treat the threshold number as a percentage
-        
+        '''
         for s in range(len(test)):
             if test[s]>maxValue:
                 maxValue = test[s]
@@ -198,7 +200,7 @@ class dictWSD:
                 results[k] = 1
             else:
                 results[k] = 0
-                
+        '''        
         ##############
         
         ###TAKE THIS OUT
@@ -213,7 +215,16 @@ class dictWSD:
         #featureSenses = self.dictionary[feature]            # add checks to see if it exists
         featureSenses = self.define_word(self.dictionary, feature)
         
+        #print featureSenses
+        for f in range(len(featureSenses)):
+            featureSenses[f] = self.stemmer(nltk.tokenize.regexp_tokenize(featureSenses[f], r'\w+'))
+        #print 'asdfweigoajrevdjvkaldsf****************'
+        #print featureSenses
+        #for fSenses in featureSenses:
+            
+        
         #ps = PorterStemmer()
+        #print targetSenses
         
         for tSense in targetSenses:
             runningScore = 0
@@ -233,42 +244,44 @@ class dictWSD:
             ###
             
             ### original
-            
+            #print tSense
+            #print 'fahwefihewvojevkijsdzoivgrejviorasjavriovjae'
+            stemmedTSense= self.stemmer(nltk.tokenize.regexp_tokenize(tSense.lower(), r'\w+'))     # was POSfilter***
             for fSenses in featureSenses:
-                runningScore += self.getScore(tSense, fSenses)     # add normalization here
+                runningScore += self.getScore(stemmedTSense, fSenses)     # add normalization here
             
             ###
             scores.append(runningScore)                     # will change this later to match with the parsed dictionary
         
         return scores
         
-    def getScore(self, targetdef,featuredef):   # computes overlap of one target sense and one context feature sense
+    def getScore(self, parsedtargetdef,fWordList):   # computes overlap of one target sense and one context feature sense
         #assume that each input is a string
         featureNextWord= "";
         targetNextWord= "";
-        fWordList = featuredef.lower().split(" ")
+        #fWordList = self.stemmer(featuredef.lower())      # was POSfilter***
         
         #tWordList = targetdef.lower().split(" ")
-        tWordList = self.POSfilter(targetdef)
+        #tWordList = self.POSfilter(targetdef)
         
         fWordCounter=0;
         score=0;
         tWordCounter=0;
         retain=0;
         checkWordsCount=0;
-        while (tWordCounter < len(tWordList)):
+        while (tWordCounter < len(parsedtargetdef)):
             while (fWordCounter < len(fWordList)):
-                if tWordList[tWordCounter] == fWordList[fWordCounter]:
+                if parsedtargetdef[tWordCounter] == fWordList[fWordCounter]:
                     featureNextWord= fWordList[fWordCounter];
-                    targetNextWord= tWordList[tWordCounter];
+                    targetNextWord= parsedtargetdef[tWordCounter];
                     while(targetNextWord == featureNextWord):
                         checkWordsCount =checkWordsCount + 1;
                         fWordCounter = fWordCounter + 1
                         tWordCounter = tWordCounter + 1
-                        if (fWordCounter>=len(fWordList) or tWordCounter>=len(tWordList)):
+                        if (fWordCounter>=len(fWordList) or tWordCounter>=len(parsedtargetdef)):
                             break
                         featureNextWord= fWordList[fWordCounter];
-                        targetNextWord = tWordList[tWordCounter];
+                        targetNextWord = parsedtargetdef[tWordCounter];
                     score = score + (((2.0)*checkWordsCount)/len(fWordList));
                     #score = score + (((2.0)**checkWordsCount)/len(fWordList));
                     #score = score + ((2.0)**checkWordsCount);
@@ -281,10 +294,11 @@ class dictWSD:
             retain =retain +1;
             tWordCounter= retain;
         #return score
-        return score/len(tWordList)
+        return score/len(parsedtargetdef)
         
     #Returns a list of the definitions of all senses/synonyms of a word
     def define_word(self, d, word):
+        '''
         try:
             xmldef = self.xml_definition(d,word)
             if len(xmldef) > 0:
@@ -295,6 +309,12 @@ class dictWSD:
             for s in synsets:
                 definitions.append(s.definition)
             return definitions
+        '''
+        synsets = wordnet.synsets(word)
+        definitions = list()
+        for s in synsets:
+            definitions.append(s.definition)
+        return definitions
 
     def genXmlDictionary(self, file):
         xml = open(file).read()
@@ -347,13 +367,14 @@ class dictWSD:
             #Convert text into partitions. #features[0]: word.pos t0 t1 ... tk
             #features[1]: prev-context, features[2]: head, features[3]: next-context
             features = line.lower().split("@")
+            #print(features)
             # Spliting of features[0] into components and combining of prev and next context into context
             senselist= re.findall('\w+', features[0])
             context = ""
             for component in features[1::2]:
+                #print(component)
                 context+=component
             parsed.append((senselist[0], context))
-            
         return parsed
         
     # code from Alex
@@ -367,7 +388,10 @@ class dictWSD:
             if str(result[i][1]) in allowed_pos:
                 filtered_features.append(result[i][0])
         features = filtered_features
-        #Performing stemming on feature words
+        return self.stemmer(features)
+
+    #Perform stemming on feature words
+    def stemmer(self, features):
         ps = PorterStemmer()
         for i in range(len(features)):
             features[i] = ps.stem(features[i])
@@ -412,20 +436,23 @@ d.main('Test Data.data', 90)
 '''
 
 # validation
-'''
+
 d = dictWSD('validation_test.data')
 d.main('validation_test.data', 0)
-'''
+
 
 # traverse through different thresholds
+'''
 d = dictWSD('validation_test.data')
+
 for i in range(90,91):
     print 'range'
     print i
     d.main('validation_test.data', i)
     
-    
 #d.main('validation_test.data', 0)
+'''
+
 
 '''lemma = WordNetLemmatizer()
 input_str = ""
