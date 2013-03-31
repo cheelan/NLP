@@ -1,0 +1,1 @@
+Smoothing factor: 0.01 Threshold: 0.007 Accuracy: 0.6
