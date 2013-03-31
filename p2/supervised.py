@@ -3,7 +3,7 @@ from nltk.stem.porter import PorterStemmer
 
 #Factor for +k smoothing
 smoothing = .01
-thres = 0.03
+thres = 0.007
 allowed_pos = ["FW", "JJ", "JJR", "JJS", "NN", "NNS", "NNP", "NNPS", "RB", "RBR", "RBS", "VB", "VBD", "VBG", "VBN", "VBP", "VBZ"]
 
 class Word:
@@ -203,11 +203,15 @@ class Supervised:
                 max_index = s + 1
             ans_list.append(0)
             '''
+            #Extension: Write the partial score
+            ans_list.append(score)
+            '''
             #Old system: Pick anything above a threshold     
             if score > thres:
                 ans_list.append(1)
             else:
                 ans_list.append(0)
+            '''
         ans_list.insert(0, 0)                           #UNORTHODOX.
         return ans_list
 
@@ -246,6 +250,8 @@ class Supervised:
                 for piece in results:
                     output_write += str(piece) + '\n'
                 outputfile.write(output_write)
+                '''
+                #OLD SYSTEM SWITCH BACK TO THIS
                 #Generate statistics regarding results
                 for j in range(len(results)):
                     if str(results[j]) != str(cor_answer[j]):
@@ -253,8 +259,12 @@ class Supervised:
                     total_answers+=1
                     #if (results[j] == "1"):
                         #ones += 1
+                '''
+                all_zeros = len(results) * [0]
+                mistakes += self.modified_score(results, cor_answer)
+                total_answers += 1
             #print("Ones guessed: " + ones)
-            accuracy = float(total_answers-mistakes)/float(total_answers)
+            accuracy = ((float(mistakes))**.5)/float(total_answers)
             print("Accuracy is: " + str(accuracy))
             return accuracy
 
@@ -267,38 +277,46 @@ class Supervised:
 
     #Used for the extension
     #"Attempt" is a partial score
-    #Returns the sum of the squares of differences
+    #Returns the 1- (sum of the squares of differences)
     def modified_score(self, attempt, correct):
         if len(attempt) != len(correct):
             print("ERROR: Attempted score is of different length from correct score")
         score = 0.
         for i in range(len(attempt)):
-            score += (attempt[i] - float(correct[i]))**2
-        return ((score / float(len(attempt)))**(0.5))
+            score += ((float(attempt[i])) - float(correct[i]))**2
+        return 1. - ((score / float(len(attempt))))
 
+
+def stupid_test(super):
+    raw = '''peter torday econom correspond demonstr anti apartheid group end loan southern africa nation westminst bank s intern headquart citi yesterday group is target natwest barclay standard charter british technic committe negoti reschedul loan south africa loan are due repay june negoti began last month zurich'''
+    target = "bank"
+    sense_num = 3
+    for s in raw.split(" "):
+        context = raw.replace(s, "")
+        prob = super.get_prob(target, context, sense_num)
+        print("Removing:\t" + s + " \tProb:\t" + str(prob)) 
+    print(str(super.get_prob(target, raw, sense_num)))
 #autolog = open("autotestingresults.txt", 'w+')
 #print("Smoothing factor: " + str(smoothing))
 #print("Threshold: " + str(thres))
 
-thres = .007
-smoothing = .01
+#thres = .007
+#smoothing = .01
 
 s = Supervised()
 
-#Extension testing
-print(s.modified_score([.2, .5, .1, .5], [0, 1, 0, 1]))
-#End extension testing
-
 #Pickled Data Training
-s.train("Training Data.data", "supervised_training.pickle")
+s.train("validation_training.data", "validation_training.pickle")
 
+#stupid_test(s)
+#print("Done stupid")
 #Nonpickled Data Training
 #s.train("Training Data.data")
 #Automated testing
 #while (smoothing < 1):
 #    autolog.write("Smoothing factor: " + str(smoothing) + '\n')
 #while (thres < .035):
-a = s.test("Test Data.data")
+a = s.test("validation_test.data")
 #autolog.write("Smoothing factor: " + str(smoothing) + " Threshold: " + str(thres) + " Accuracy: " + str(a) + '\n')
 #print(("Smoothing factor: \t" + str(smoothing) + "\t Threshold: \t" + str(thres) + "\t Accuracy: \t" + str(a)))
     #thres+=.001
