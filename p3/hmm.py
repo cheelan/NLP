@@ -13,6 +13,12 @@ class Node:
     emission_probability = 0.
     transition_counts = []
 
+    #If we use NLTK for n-gram stuff, you can't add new training data to an existing model
+    #Therefore, we'll need to keep track of a list of sentences, and append to that throughout
+    #the training process. When that's done, generate an nltk ngram model. In order to go with this,
+    #we need to first come up with a reliable way to determine the exact probability from the perplexity
+    #of a sentence.
+
     def __init__(self, score, n, num_states):
         self.n = n
         self.score = score
