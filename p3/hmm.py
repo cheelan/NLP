@@ -39,6 +39,7 @@ class HMM:
 
     author = ""
     nodes = []
+    prev_score = 0
 
     def __init__(self, states, author):
         self.nodes = []*len(states)
@@ -48,13 +49,17 @@ class HMM:
             self.nodes[i] = Node(score, len(self.nodes))
             score += 1
             i += 1
-            
+        self.prev_score = self.gen_initial_state()       
         self.author = author
+
+    #For picking the first state of a paragraph. For now, start at 0, but try fancy things later
+    def gen_initial_state(self):
+        return self.prev_score
 
     #Given a parsed sentence and its sentiment score, train it
     def train_sentence(self, sentence, score):
         index = score_to_index(score)
-        self.nodes[index].train_sentence(sentence)
+        self.nodes[index].train_sentence(sentence, self.prev_score)
 
     #Outputs a sequence of sentiments using the viterbi algorithm
     def viterbi(self, sentence_list):
