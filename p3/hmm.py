@@ -8,9 +8,8 @@ def score_to_index(score):
     return score + 2
 
 class Node:
-    id = 0 #Also known as score
+    node_id = 0 #Also known as score
     n = -1 #n in n-gram
-    emission_probability = 0.
     transition_counts = []
 
     #If we use NLTK for n-gram stuff, you can't add new training data to an existing model
@@ -26,10 +25,9 @@ class Node:
 
     #Get the probability of transitioning from the previous score to the current score
     def _get_transition_probability(self, prev_score):
+
         new_index = score_to_index(prev_score)
-        sum = 0
-        for i in self.transition_counts:
-            sum += i
+        
         return float(self.transition_counts[new_index]) / float(sum) 
 
     #Add this sentence's n-grams to the bucket
@@ -46,6 +44,7 @@ class HMM:
     author = ""
     nodes = []
     prev_score = 0
+    transitions = 0
 
     def __init__(self, states, author):
         self.nodes = []*len(states)
