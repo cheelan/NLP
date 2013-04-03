@@ -74,11 +74,19 @@ class HMM:
 
 
 est = lambda fdist, bins: LidstoneProbDist(fdist, 0.2)
-#lm = NgramModel(2, brown.words(categories='news'), estimator=est)
-lm1 = NgramModel(2, ["apple", "ate", "an", "apple"], estimator=est)
-lm2 = NgramModel(2, ["nlp", "ran", "cat", "dog"], estimator=est)
+lm = NgramModel(2, brown.words(categories='news'), estimator=est)
+#lm1 = NgramModel(2, ["apple", "ate", "an", "apple"], estimator=est)
+#lm2 = NgramModel(2, ["nlp", "ran", "cat", "dog"], estimator=est)
 
-
-print(len(brown.words(categories='news')))
-
-#print(str(lm.perplexity(["apple", "ate", "an", "apple"])))
+sen = "as a coincidence he gave frank some kind of a stress relieving pill the previous night which frank took in a moment of weakness and desperation as he followed mary to this drug pad concerned that she couldnt handle the strain any longer of learning about her fathers death especially when she wasnt able to put a closure on their stormy relationship by having one last chance to talk to him she hasnt even seen her father for the last three years due to an argument"
+sen2 = "askddfesf adsafe asdfhjkbeew jbdajse joiuewoeuih hgjd jgbna jkasdaf"
+sen3 = "We congratulate the entire membership on its record of good legislation"
+perplexity = math.exp(-1. * lm.entropy(sen.split(" ")))
+perplexity2 = math.exp(-1. * lm.entropy(sen2.split(" ")))
+perplexity3 = math.exp(-1. * lm.entropy(sen3.split(" ")))
+#print("Words " + str(sen.count(" ")))
+#probability = 1. / float((perplexity ** (sen.count(" "))))
+print(str(perplexity))
+print(str(perplexity2))
+print(str(perplexity3))
+#print(str(probability))
