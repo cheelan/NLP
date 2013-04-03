@@ -71,15 +71,16 @@ class HMM:
                 self.num_sentences += 1
                 # Check to see if it is a paragraph header
                 if (line[0] == '{'):
-                    score = int(line[-2])
-                    line = line[3:-4]
-                    self.nodes[score + 2].append(line)
+                    line = line.split(' ')
+                    sent_score = int(line[-1][1:-1])
+                    par_score = int(line[0][1:-1])
+                    self.nodes[sent_score + 2].append(line[1,-1].strip().split())
                     continue
                 # For all other sentences
                 else:
-                    score = int(line[-2])
-                    line = line[:-4]
-                    self.nodes[score + 2].append(line)
+                    line, score = line.rsplit(' ',1)
+                    score = int(score[1:-1])
+                    self.nodes[score + 2].append(line.strip().split())
             print("Finished generating training data")
             for node in self.nodes:
                 node.ngram_model = NgramModel(2, node.sentence_list)
