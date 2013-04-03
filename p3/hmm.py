@@ -11,6 +11,7 @@ class Node:
     node_id = 0 #Also known as score
     n = -1 #n in n-gram
     transition_counts = []
+    sentence_list = list()
 
     #If we use NLTK for n-gram stuff, you can't add new training data to an existing model
     #Therefore, we'll need to keep track of a list of sentences, and append to that throughout
@@ -47,13 +48,7 @@ class HMM:
     transitions = 0
 
     def __init__(self, states, author):
-        self.nodes = []*len(states)
-        i = 0
-        score = -2
-        for node in self.nodes:
-            self.nodes[i] = Node(score, len(self.nodes))
-            score += 1
-            i += 1
+        self.nodes = [Node(score, len(self.nodes)) for score in range(-2,3)]
         self.prev_score = self.gen_initial_state()       
         self.author = author
 
@@ -63,8 +58,73 @@ class HMM:
 
     #Given a parsed sentence and its sentiment score, train it
     def train_sentence(self, sentence, score):
+        #############################################################################
+        #TRAIN METHOD
+        if importname != "":
+            with open(importname, 'rb') as f:
+                self.wsd = pickle.load(f)
+                print("Loaded training file " + importname)
+                return
+        data = open(filename, 'r')
+        if (data == None):
+            print("Error: Training file not found")
+        else:
+            data = data.readlines()
+            for line in data:
+                #Convert text into partitions. #features[0]: word.pos t0 t1 ... tk
+                #features[1]: prev-context, features[2]: head, features[3]: next-context
+                features = line.lower().split("@")
+                # Spliting of features[0] into components and combining of prev and next context into context
+                senselist= re.findall('\w+', features[0])
+                context = ""
+                for component in features[1::2]:
+                    context+=component
+                # Handling of senselist
+                senses = list()
+                for i in range(3,len(senselist)):
+                    if senselist[i] == "1":
+                        senses.append(i-3)
+                # Call the train line function to handle
+                self.train_line(senselist[0], context, senses)
+            print("Finished generating training data")
+            with open('supervised_training.pickle', 'wb') as f: 
+                pickle.dump(self.wsd, f)
+                print("Done pickling")
+
+        #############################################################################
         index = score_to_index(score)
         self.nodes[index].train_sentence(sentence, self.prev_score)
+
+    #Given a training file, train the hidden markov model.
+    def train(self, filename):
+        data = open(filename, 'r')
+        if (data == None):
+            print("Error: Training file not found")
+        else:
+            # Initialize 
+            data = data.readlines()
+            for line in data:
+                # Check to see if it is a review header
+                if (line[0] = '['):
+                    continue
+                # Check to see if it is a paragraph header
+                if (line[0] = '{'):
+                    score = int(line[-2])
+                    line = line[3:-4]
+
+
+
+
+
+
+                # Call the train line function to handle
+                self.train_line(senselist[0], context, senses)
+            print("Finished generating training data")
+            with open('supervised_training.pickle', 'wb') as f: 
+                pickle.dump(self.wsd, f)
+                print("Done pickling")
+
+        #############################################################################
 
     #Outputs a sequence of sentiments using the viterbi algorithm
     def viterbi(self, sentence_list):
