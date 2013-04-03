@@ -55,45 +55,6 @@ class HMM:
     def gen_initial_state(self):
         return 0
 
-    #Given a parsed sentence and its sentiment score, train it
-    def train_sentence(self, sentence, score):
-        #############################################################################
-        #TRAIN METHOD
-        if importname != "":
-            with open(importname, 'rb') as f:
-                self.wsd = pickle.load(f)
-                print("Loaded training file " + importname)
-                return
-        data = open(filename, 'r')
-        if (data == None):
-            print("Error: Training file not found")
-        else:
-            data = data.readlines()
-            for line in data:
-                #Convert text into partitions. #features[0]: word.pos t0 t1 ... tk
-                #features[1]: prev-context, features[2]: head, features[3]: next-context
-                features = line.lower().split("@")
-                # Spliting of features[0] into components and combining of prev and next context into context
-                senselist= re.findall('\w+', features[0])
-                context = ""
-                for component in features[1::2]:
-                    context+=component
-                # Handling of senselist
-                senses = list()
-                for i in range(3,len(senselist)):
-                    if senselist[i] == "1":
-                        senses.append(i-3)
-                # Call the train line function to handle
-                self.train_line(senselist[0], context, senses)
-            print("Finished generating training data")
-            with open('supervised_training.pickle', 'wb') as f: 
-                pickle.dump(self.wsd, f)
-                print("Done pickling")
-
-        #############################################################################
-        index = score_to_index(score)
-        self.nodes[index].train_sentence(sentence, self.prev_score)
-
     #Given a training file, train the hidden markov model.
     def train(self, filename):
         data = open(filename, 'r')
@@ -106,27 +67,26 @@ class HMM:
                 # Check to see if it is a review header
                 if (line[0] == '['):
                     continue
+                # Increment total number of sentences parsed.
+                self.num_sentences += 1
                 # Check to see if it is a paragraph header
                 if (line[0] == '{'):
                     score = int(line[-2])
                     line = line[3:-4]
-
-
-
-
-
-
-                # Call the train line function to handle
-                self.train_line(senselist[0], context, senses)
+                    self.nodes[score + 2].append(line)
+                    continue
+                # For all other sentences
+                else:
+                    score = int(line[-2])
+                    line = line[:-4]
+                    self.nodes[score + 2].append(line)
             print("Finished generating training data")
+            for node in self.nodes:
+                node.ngram_model = NgramModel(2, node.sentence_list)
+            print("Finished generating ngram models")
             with open('supervised_training.pickle', 'wb') as f: 
                 pickle.dump(self.wsd, f)
                 print("Done pickling")
-
-        #############################################################################
-        self.num_sentences += 1
-        index = score_to_index(score)
-        self.nodes[index].train_sentence(sentence, self.prev_score)
 
     #Returns an approximation of the log probability of a sentence appearing in the specified state
     def get_log_prob_from_entropy(self, sentence, state):
