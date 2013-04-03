@@ -91,12 +91,32 @@ class HMM:
     #Returns an approximation of the log probability of a sentence appearing in the specified state
     def get_log_prob_from_entropy(self, sentence, state):
         split_sentence = sentence.split(" ")
-        return self.nodes[get_index_from_score(state)].entropy(split_sentence) + math.log(len(split_sentences))
+        return self.nodes[get_index_from_score(state)].entropy(split_sentence) * len(split_sentences)
 
     #Outputs a sequence of sentiments using the viterbi algorithm
     def viterbi(self, sentence_list):
-        pass
+        V = [{}]
+        path = {}
+        # Initialize base cases (t == 0)
+        for y in self.nodes:
+            V[0][y.id] = math.log(init_prob) + self.get_log_prob_from_entropy(sentence_list[0], y.id)
+            path[y.id] = [y.id]
 
+        # Run Viterbi for t > 0
+        for t in range(1,len(sentence_list)):
+            V.append({})
+            newpath = {}
+ 
+            for y in self.nodes:
+                id = y.id
+                (prob, state) = max([(V[t-1][y0.id] + trans_p[y0.id][y.id] + self.get_lob_prob(sentence_list[t], y.id), y0.id) for y0 in self.nodes])
+                V[t][y] = prob
+                newpath[y] = path[state] + [y]
+ 
+            # Don't need to remember the old paths
+            path = newpath
+        (prob, state) = max([(V[len(sentence_list) - 1][y.id], y.id) for y in self.nodes])
+        return path[state]
 
 est = lambda fdist, bins: LidstoneProbDist(fdist, 0.2)
 lm = NgramModel(2, brown.words(categories='news'), estimator=est)
