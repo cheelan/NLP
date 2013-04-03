@@ -104,10 +104,10 @@ class HMM:
             data = data.readlines()
             for line in data:
                 # Check to see if it is a review header
-                if (line[0] = '['):
+                if (line[0] == '['):
                     continue
                 # Check to see if it is a paragraph header
-                if (line[0] = '{'):
+                if (line[0] == '{'):
                     score = int(line[-2])
                     line = line[3:-4]
 
