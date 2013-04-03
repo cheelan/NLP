@@ -43,7 +43,7 @@ class HMM:
     author = ""
     nodes = []
     prev_score = 0
-    transitions = 0
+    num_sentences = 0
 
     def __init__(self, states, author):
         self.nodes = []*len(states)
@@ -62,6 +62,7 @@ class HMM:
 
     #Given a parsed sentence and its sentiment score, train it
     def train_sentence(self, sentence, score):
+        self.num_sentences += 1
         index = score_to_index(score)
         self.nodes[index].train_sentence(sentence, self.prev_score)
 
