@@ -10,6 +10,7 @@ def score_to_index(score):
 class Node:
     node_id = 0 #Also known as score
     n = -1 #n in n-gram
+    count = 0
     transition_counts = []
     sentence_list = list()
     ngram_model = None 
@@ -90,6 +91,7 @@ class HMM:
                     index = score_to_index(score)
                     self.nodes[score_to_index(score)].sentence_list.append(line)
                 self.nodes[score_to_index(self.prev_score)].transition_counts[score_to_index(score)] += 1
+                self.nodes[score_to_index(score)].count += 1
                 self.prev_score = score
             print("Finished generating training data")
             for node in self.nodes:
@@ -97,6 +99,9 @@ class HMM:
             #with open('supervised_training.pickle', 'wb') as f: 
             #    pickle.dump(self.wsd, f)
             #    print("Done pickling")
+
+    def get_initial_prob(self, state):
+        return float(self.nodes[score_to_index(state)].count) / float(self.num_sentences)
 
     #Returns an approximation of the log probability of a sentence appearing in the specified state
     def get_log_prob_from_entropy(self, sentence, state):
