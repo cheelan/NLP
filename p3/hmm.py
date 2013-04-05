@@ -30,7 +30,7 @@ class Node:
         new_index = score_to_index(prev_score)
         total_transitions = 0
         for i in self.transition_counts:
-            total_transitions += 1
+            total_transitions += i
         return float(self.transition_counts[new_index]) / float(total_transitions) 
 
     #Add this sentence's n-grams to the bucket
@@ -131,7 +131,7 @@ class HMM:
 
 testhmm = HMM([-2, -1, 0, 1, 2], "Testing", 2)
 testhmm.train("testcases/test1.txt")
-print(str(testhmm.nodes[2].transition_counts))
+print(str(testhmm.nodes[1].transition_counts))
 '''
 est = lambda fdist, bins: LidstoneProbDist(fdist, 0.2)
 lm = NgramModel(2, brown.words(categories='news'), estimator=est)
