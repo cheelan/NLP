@@ -26,9 +26,12 @@ class Node:
         self.transition_counts = [0]*num_states
 
     #Get the probability of transitioning from the previous score to the current score
-    def get_transition_probability(self, prev_score, num_sentences):
+    def get_transition_probability(self, prev_score):
         new_index = score_to_index(prev_score)
-        return float(self.transition_counts[new_index]) / float(new_sentences) 
+        total_transitions = 0
+        for i in self.transition_counts:
+            total_transitions += 1
+        return float(self.transition_counts[new_index]) / float(total_transitions) 
 
     #Add this sentence's n-grams to the bucket
     #Update transition counts
@@ -45,9 +48,11 @@ class HMM:
     nodes = []
     prev_score = 0
     num_sentences = 0
+    n = -1
 
-    def __init__(self, states, author):
-        self.nodes = [Node(score, len(self.nodes)) for score in range(-2,3)]
+    def __init__(self, states, author, n):
+        self.n = n
+        self.nodes = [Node(score, n, len(states)) for score in range(-2,3)]
         self.prev_score = self.gen_initial_state()       
         self.author = author
 
@@ -69,25 +74,29 @@ class HMM:
                     continue
                 # Increment total number of sentences parsed.
                 self.num_sentences += 1
+                
                 # Check to see if it is a paragraph header
                 if (line[0] == '{'):
                     line = line.split(' ')
-                    sent_score = int(line[-1][1:-1])
-                    par_score = int(line[0][1:-1])
-                    self.nodes[sent_score + 2].append(line[1,-1].strip().split())
-                    continue
+                    score = int(re.findall(r'-?\d', line[-1])[0])
+                    #score = int(line[-1][1:-1])
+                    #par_score = int(line[0][1:-1])
+                    #par_score = re.findall(r'\b\d+\b', line[0])[0]
+                    self.nodes[score_to_index(score)].sentence_list.append(line[1:-1])
                 # For all other sentences
                 else:
-                    line, score = line.rsplit(' ',1)
-                    score = int(score[1:-1])
-                    self.nodes[score + 2].append(line.strip().split())
+                    line = line.split(' ')
+                    score = int(re.findall(r'-?\d', line[-1])[0])
+                    index = score_to_index(score)
+                    self.nodes[score_to_index(score)].sentence_list.append(line)
+                self.nodes[score_to_index(self.prev_score)].transition_counts[score_to_index(score)] += 1
+                self.prev_score = score
             print("Finished generating training data")
             for node in self.nodes:
-                node.ngram_model = NgramModel(2, node.sentence_list)
-            print("Finished generating ngram models")
-            with open('supervised_training.pickle', 'wb') as f: 
-                pickle.dump(self.wsd, f)
-                print("Done pickling")
+                node.ngram_model = NgramModel(self.n, node.sentence_list)
+            #with open('supervised_training.pickle', 'wb') as f: 
+            #    pickle.dump(self.wsd, f)
+            #    print("Done pickling")
 
     #Returns an approximation of the log probability of a sentence appearing in the specified state
     def get_log_prob_from_entropy(self, sentence, state):
@@ -110,7 +119,8 @@ class HMM:
  
             for y in self.nodes:
                 id = y.id
-                (prob, state) = max([(V[t-1][y0.id] + trans_p[y0.id][y.id] + self.get_lob_prob(sentence_list[t], y.id), y0.id) for y0 in self.nodes])
+                #Double check that transition_prob gets y.id and not y0.id
+                (prob, state) = max([(V[t-1][y0.id] + y0.get_transition_probability(y.id) + self.get_lob_prob(sentence_list[t], y.id), y0.id) for y0 in self.nodes])
                 V[t][y] = prob
                 newpath[y] = path[state] + [y]
  
@@ -119,6 +129,10 @@ class HMM:
         (prob, state) = max([(V[len(sentence_list) - 1][y.id], y.id) for y in self.nodes])
         return path[state]
 
+testhmm = HMM([-2, -1, 0, 1, 2], "Testing", 2)
+testhmm.train("testcases/test1.txt")
+print(str(testhmm.nodes[2].transition_counts))
+'''
 est = lambda fdist, bins: LidstoneProbDist(fdist, 0.2)
 lm = NgramModel(2, brown.words(categories='news'), estimator=est)
 #lm1 = NgramModel(2, ["apple", "ate", "an", "apple"], estimator=est)
@@ -142,3 +156,4 @@ print(str(perplexity))
 print(str(perplexity2))
 print(str(perplexity3))
 #print(str(probability))
+'''
