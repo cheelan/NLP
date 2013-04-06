@@ -10,7 +10,8 @@ def score_to_index(score):
 class Node:
     node_id = 0 #Also known as score
     n = -1 #n in n-gram
-    count = 0
+    count = 0 #Number of times this score is seen
+    paragraph_count = 0 #Number of times this score is the first score in the paragraph
     transition_counts = []
     sentence_list = list()
     ngram_model = None 
@@ -49,6 +50,7 @@ class HMM:
     nodes = []
     prev_score = 0
     num_sentences = 0
+    num_paragraphs = 0
     n = -1
 
     def __init__(self, states, author, n):
@@ -78,12 +80,14 @@ class HMM:
                 
                 # Check to see if it is a paragraph header
                 if (line[0] == '{'):
+                    self.num_paragraphs += 1
                     line = line.split(' ')
                     score = int(re.findall(r'-?\d', line[-1])[0])
                     #score = int(line[-1][1:-1])
                     #par_score = int(line[0][1:-1])
                     #par_score = re.findall(r'\b\d+\b', line[0])[0]
                     self.nodes[score_to_index(score)].sentence_list.append(line[1:-1])
+                    self.nodes[score_to_index(score)].paragraph_count += 1
                 # For all other sentences
                 else:
                     line = line.split(' ')
@@ -101,7 +105,11 @@ class HMM:
             #    print("Done pickling")
 
     def get_initial_prob(self, state):
-        return float(self.nodes[score_to_index(state)].count) / float(self.num_sentences)
+        #Naive way
+        #return float(self.nodes[score_to_index(state)].count) / float(self.num_sentences)
+        
+        #Smart way
+        return float(self.nodes[score_to_index(state)].paragraph_count) / float(self.num_paragraphs)
 
     #Returns an approximation of the log probability of a sentence appearing in the specified state
     def get_log_prob_from_entropy(self, sentence, state):
