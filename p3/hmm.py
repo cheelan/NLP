@@ -28,11 +28,11 @@ def log_3sum(a, b, c):
 
 class Node:
     id = 0 #Also known as score
-    n = -1 #n in n-gram
+    n = 0 #n in n-gram
     count = 0 #Number of times this score is seen
     paragraph_count = 0 #Number of times this score is the first score in the paragraph
-    transition_counts = []
-    sentence_list = list()
+    transition_counts = None
+    sentence_list = None
     ngram_model = None 
 
     #If we use NLTK for n-gram stuff, you can't add new training data to an existing model
@@ -44,6 +44,8 @@ class Node:
     def __init__(self, score, n, num_states):
         self.n = n
         self.id = score
+        self.count = 0
+        self.sentence_list = []
         self.transition_counts = [0]*num_states
 
     #Get the probability of transitioning from the previous score to the current score
@@ -66,7 +68,7 @@ class Node:
 class HMM:
 
     author = ""
-    nodes = []
+    nodes = None
     prev_score = 0
     num_sentences = 0
     num_paragraphs = 0
@@ -188,10 +190,11 @@ class HMM:
         (prob, state) = max([(V[len(sentence_list) - 1][score_to_index(y.id)], y.id) for y in self.nodes])
         return path[state]
 
-print(str(math.log(3.+4.+5.)))
-print(str(log_3sum(3., 4., 5.)))
+
 testhmm = HMM([-2, -1, 0, 1, 2], "Testing", 2)
 testhmm.train("DennisSchwartz_train.txt")
+print(str((testhmm.nodes[0].count)))
+print(str((testhmm.nodes[2].count)))
 testhmm.test("DennisSchwartz_test.txt")
 #print(str(testhmm.nodes[1].transition_counts))
 '''
