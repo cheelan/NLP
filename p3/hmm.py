@@ -8,7 +8,7 @@ def score_to_index(score):
     return score + 2
 
 class Node:
-    node_id = 0 #Also known as score
+    id = 0 #Also known as score
     n = -1 #n in n-gram
     count = 0 #Number of times this score is seen
     paragraph_count = 0 #Number of times this score is the first score in the paragraph
@@ -24,7 +24,7 @@ class Node:
 
     def __init__(self, score, n, num_states):
         self.n = n
-        self.score = score
+        self.id = score
         self.transition_counts = [0]*num_states
 
     #Get the probability of transitioning from the previous score to the current score
@@ -73,7 +73,7 @@ class HMM:
             data = data.readlines()
             for line in data:
                 # Check to see if it is a review header
-                if (line[0] == '['):
+                if (line[0] == '[' or line[0] == '\n'):
                     continue
                 # Increment total number of sentences parsed.
                 self.num_sentences += 1
@@ -91,7 +91,11 @@ class HMM:
                 # For all other sentences
                 else:
                     line = line.split(' ')
-                    score = int(re.findall(r'-?\d', line[-1])[0])
+                    score = (re.findall(r'-?\d', line[-1]))
+                    if len(score) < 1:
+                        x = 2
+                    else:
+                        score = int(score[0])
                     index = score_to_index(score)
                     self.nodes[score_to_index(score)].sentence_list.append(line)
                 self.nodes[score_to_index(self.prev_score)].transition_counts[score_to_index(score)] += 1
@@ -104,6 +108,29 @@ class HMM:
             #    pickle.dump(self.wsd, f)
             #    print("Done pickling")
 
+    def test(self, filename):
+        data = open(filename, 'r')
+        l = list()
+        if (data == None):
+            print("Error: Training file not found")
+        else:
+            # Initialize 
+            data = data.readlines()
+            for line in data:
+                # Check to see if it is a review header
+                if (line[0] == '[' or line[0] == '\n'):
+                    continue
+
+                # Check to see if it is a paragraph header
+                if (line[0] == '{'):
+                    self.num_paragraphs += 1
+                    l.append(line)
+                # For all other sentences
+                else:
+                    l.append(line)
+            print("Finished parsing test data")
+            print(str(self.viterbi(l)))
+
     def get_initial_prob(self, state):
         #Naive way
         #return float(self.nodes[score_to_index(state)].count) / float(self.num_sentences)
@@ -112,39 +139,44 @@ class HMM:
         return float(self.nodes[score_to_index(state)].paragraph_count) / float(self.num_paragraphs)
 
     #Returns an approximation of the log probability of a sentence appearing in the specified state
-    def get_log_prob_from_entropy(self, sentence, state):
-        split_sentence = sentence.split(" ")
-        return self.nodes[get_index_from_score(state)].entropy(split_sentence) * len(split_sentences)
-
+    def get_log_prob(self, sentence, state):
+        split_sentence = sentence.split(" ")[0:-1]
+        p = 0.
+        try:
+            p = self.nodes[score_to_index(state)].ngram_model.entropy(split_sentence) * len(split_sentence)
+        except:
+            x = 2
+        return p
     #Outputs a sequence of sentiments using the viterbi algorithm
     def viterbi(self, sentence_list):
         V = [{}]
         path = {}
         # Initialize base cases (t == 0)
         for y in self.nodes:
-            V[0][y.id] = math.log(init_prob) + self.get_log_prob_from_entropy(sentence_list[0], y.id)
-            path[y.id] = [y.id]
+            V[0][score_to_index(y.id)] = math.log(self.get_initial_prob(y.id)) + self.get_log_prob(sentence_list[0], y.id)
+            path[score_to_index(y.id)] = [y.id]
 
         # Run Viterbi for t > 0
         for t in range(1,len(sentence_list)):
             V.append({})
             newpath = {}
- 
+            print(sentence_list[t])
             for y in self.nodes:
                 id = y.id
                 #Double check that transition_prob gets y.id and not y0.id
-                (prob, state) = max([(V[t-1][y0.id] + y0.get_transition_probability(y.id) + self.get_lob_prob(sentence_list[t], y.id), y0.id) for y0 in self.nodes])
-                V[t][y] = prob
-                newpath[y] = path[state] + [y]
+                (prob, state) = max([(V[t-1][score_to_index(y0.id)] + y0.get_transition_probability(y.id) + self.get_log_prob(sentence_list[t], y.id), y0.id) for y0 in self.nodes])
+                V[t][score_to_index(y.id)] = prob
+                newpath[score_to_index(y.id)] = path[state] + [score_to_index(y.id)]
  
             # Don't need to remember the old paths
             path = newpath
-        (prob, state) = max([(V[len(sentence_list) - 1][y.id], y.id) for y in self.nodes])
+        (prob, state) = max([(V[len(sentence_list) - 1][score_to_index(y.id)], y.id) for y in self.nodes])
         return path[state]
 
 testhmm = HMM([-2, -1, 0, 1, 2], "Testing", 2)
-testhmm.train("testcases/test1.txt")
-print(str(testhmm.nodes[1].transition_counts))
+testhmm.train("DennisSchwartz_train.txt")
+testhmm.test("DennisSchwartz_test.txt")
+#print(str(testhmm.nodes[1].transition_counts))
 '''
 est = lambda fdist, bins: LidstoneProbDist(fdist, 0.2)
 lm = NgramModel(2, brown.words(categories='news'), estimator=est)
