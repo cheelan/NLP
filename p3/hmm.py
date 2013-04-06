@@ -22,18 +22,13 @@ def log_sum(a, c):
 #This will work to calculate log(a+b+c)
 #See the equation after "more generally" at
 #http://en.wikipedia.org/wiki/List_of_logarithmic_identities#Summation.2Fsubtraction
-def log_3sum(a, b, c):
-    return math.log(a) + math.log(1+math.exp(math.log(b)+math.log(1+math.exp(math.log(c)-math.log(b)))-math.log(a)))
 
+def log_3sum(a, b, c):
+    #return math.log(a) + math.log(1+math.exp(math.log(b)+math.log(1+math.exp(math.log(c)-math.log(b)))-math.log(a)))
+    return a + b + c
 
 class Node:
-    id = 0 #Also known as score
-    n = 0 #n in n-gram
-    count = 0 #Number of times this score is seen
-    paragraph_count = 0 #Number of times this score is the first score in the paragraph
-    transition_counts = None
-    sentence_list = None
-    ngram_model = None 
+
 
     #If we use NLTK for n-gram stuff, you can't add new training data to an existing model
     #Therefore, we'll need to keep track of a list of sentences, and append to that throughout
@@ -47,6 +42,7 @@ class Node:
         self.count = 0
         self.sentence_list = []
         self.transition_counts = [0]*num_states
+        self.paragraph_count = 0
 
     #Get the probability of transitioning from the previous score to the current score
     def get_transition_probability(self, prev_score):
@@ -123,8 +119,9 @@ class HMM:
                 self.nodes[score_to_index(score)].count += 1
                 self.prev_score = score
             print("Finished generating training data")
+            est = lambda fdist, bins: LidstoneProbDist(fdist, 0.2)
             for node in self.nodes:
-                node.ngram_model = NgramModel(self.n, node.sentence_list)
+                node.ngram_model = NgramModel(self.n, node.sentence_list, estimator=est)
             #with open('supervised_training.pickle', 'wb') as f: 
             #    pickle.dump(self.wsd, f)
             #    print("Done pickling")
@@ -162,6 +159,8 @@ class HMM:
     #Returns an approximation of the log probability of a sentence appearing in the specified state
     def get_log_prob(self, sentence, state):
         split_sentence = sentence.split(" ")[0:-1]
+        if split_sentence[0] == '{}':
+            split_sentence = split_sentence[1:]
         p = self.nodes[score_to_index(state)].ngram_model.entropy(split_sentence) * (len(split_sentence) - self.n - 1)
         return p
     #Outputs a sequence of sentiments using the viterbi algorithm
@@ -183,12 +182,12 @@ class HMM:
                 #Double check that transition_prob gets y.id and not y0.id
                 (prob, state) = max([(log_3sum(V[t-1][score_to_index(y0.id)], (-1 * math.log(y0.get_transition_probability(y.id))), self.get_log_prob(sentence_list[t], y0.id)), y0.id) for y0 in self.nodes])
                 V[t][score_to_index(y.id)] = prob
-                newpath[score_to_index(y.id)] = path[state] + [score_to_index(y.id)]
- 
+                newpath[score_to_index(y.id)] = path[score_to_index(state)] + [score_to_index(y.id)]
+            #print(str(state))
             # Don't need to remember the old paths
             path = newpath
         (prob, state) = max([(V[len(sentence_list) - 1][score_to_index(y.id)], y.id) for y in self.nodes])
-        return path[state]
+        return path[score_to_index(state)]
 
 
 testhmm = HMM([-2, -1, 0, 1, 2], "Testing", 2)
