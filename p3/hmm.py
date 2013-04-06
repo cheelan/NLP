@@ -11,8 +11,9 @@ def score_to_index(score):
 #b = log(y)
 #returns log(x+y)
 #THIS WONT WORK.
+#Shouldn't this be log(a+c) = log(a) + log(1+(c/a))?
 def log_sum(a, c):
-    if a < c:
+    if a < c and a > 0:
         t = a
         c = a
         a = t
