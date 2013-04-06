@@ -7,6 +7,24 @@ from nltk.probability import LidstoneProbDist
 def score_to_index(score):
     return score + 2
 
+#a = log(x)
+#b = log(y)
+#returns log(x+y)
+#THIS WONT WORK.
+def log_sum(a, c):
+    if a < c:
+        t = a
+        c = a
+        a = t
+    return a + math.log(1+math.e**(c-a))
+
+#This will work to calculate log(a+b+c)
+#See the equation after "more generally" at
+#http://en.wikipedia.org/wiki/List_of_logarithmic_identities#Summation.2Fsubtraction
+def log_sum_list(lst):
+    pass
+
+
 class Node:
     id = 0 #Also known as score
     n = -1 #n in n-gram
@@ -160,11 +178,11 @@ class HMM:
         for t in range(1,len(sentence_list)):
             V.append({})
             newpath = {}
-            print(sentence_list[t])
+            #print(sentence_list[t])
             for y in self.nodes:
                 id = y.id
                 #Double check that transition_prob gets y.id and not y0.id
-                (prob, state) = max([(V[t-1][score_to_index(y0.id)] + y0.get_transition_probability(y.id) + self.get_log_prob(sentence_list[t], y.id), y0.id) for y0 in self.nodes])
+                (prob, state) = max([(log_sum(V[t-1][score_to_index(y0.id)], log_sum(math.log(y0.get_transition_probability(y.id)), self.get_log_prob(sentence_list[t], y0.id))), y0.id) for y0 in self.nodes])
                 V[t][score_to_index(y.id)] = prob
                 newpath[score_to_index(y.id)] = path[state] + [score_to_index(y.id)]
  
@@ -173,6 +191,8 @@ class HMM:
         (prob, state) = max([(V[len(sentence_list) - 1][score_to_index(y.id)], y.id) for y in self.nodes])
         return path[state]
 
+print(str(math.log(3.+4.+5.)))
+print(str(log_sum(3, log_sum(4,5))))
 testhmm = HMM([-2, -1, 0, 1, 2], "Testing", 2)
 testhmm.train("DennisSchwartz_train.txt")
 testhmm.test("DennisSchwartz_test.txt")
