@@ -22,8 +22,8 @@ def log_sum(a, c):
 #This will work to calculate log(a+b+c)
 #See the equation after "more generally" at
 #http://en.wikipedia.org/wiki/List_of_logarithmic_identities#Summation.2Fsubtraction
-def log_sum_list(lst):
-    pass
+def log_3sum(a, b, c):
+    return math.log(a) + math.log(1+math.exp(math.log(b)+math.log(1+math.exp(math.log(c)-math.log(b)))-math.log(a)))
 
 
 class Node:
@@ -160,11 +160,7 @@ class HMM:
     #Returns an approximation of the log probability of a sentence appearing in the specified state
     def get_log_prob(self, sentence, state):
         split_sentence = sentence.split(" ")[0:-1]
-        p = 0.
-        try:
-            p = self.nodes[score_to_index(state)].ngram_model.entropy(split_sentence) * len(split_sentence)
-        except:
-            x = 2
+        p = self.nodes[score_to_index(state)].ngram_model.entropy(split_sentence) * (len(split_sentence) - self.n - 1)
         return p
     #Outputs a sequence of sentiments using the viterbi algorithm
     def viterbi(self, sentence_list):
@@ -183,7 +179,7 @@ class HMM:
             for y in self.nodes:
                 id = y.id
                 #Double check that transition_prob gets y.id and not y0.id
-                (prob, state) = max([(log_sum(V[t-1][score_to_index(y0.id)], log_sum(math.log(y0.get_transition_probability(y.id)), self.get_log_prob(sentence_list[t], y0.id))), y0.id) for y0 in self.nodes])
+                (prob, state) = max([(log_3sum(V[t-1][score_to_index(y0.id)], (-1 * math.log(y0.get_transition_probability(y.id))), self.get_log_prob(sentence_list[t], y0.id)), y0.id) for y0 in self.nodes])
                 V[t][score_to_index(y.id)] = prob
                 newpath[score_to_index(y.id)] = path[state] + [score_to_index(y.id)]
  
@@ -193,7 +189,7 @@ class HMM:
         return path[state]
 
 print(str(math.log(3.+4.+5.)))
-print(str(log_sum(3, log_sum(4,5))))
+print(str(log_3sum(3., 4., 5.)))
 testhmm = HMM([-2, -1, 0, 1, 2], "Testing", 2)
 testhmm.train("DennisSchwartz_train.txt")
 testhmm.test("DennisSchwartz_test.txt")
