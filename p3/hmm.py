@@ -180,6 +180,11 @@ class HMM:
             for line in data:
                 # Check to see if it is a review header
                 if (line[0] == '[' or line[0] == '\n'):
+                    if len(l) > 0:
+                        t = self.viterbi(l)
+                        assert len(t) == len(l)
+                        ans += self.viterbi(l)
+                    l = list()
                     continue
 
                 # Check to see if it is a paragraph header
@@ -194,7 +199,7 @@ class HMM:
                     l.append(line)
             print("Finished parsing test data")
             #return self.viterbi(l)
-            #return ans
+            return ans
             return self.viterbi(l)
 
     def get_initial_prob(self, state):
@@ -210,7 +215,7 @@ class HMM:
         if split_sentence[0] == '{}':
             split_sentence = split_sentence[1:]
         split_sentence = filter(split_sentence)
-        p = self.nodes[score_to_index(state)].ngram_model.entropy(split_sentence) * (len(split_sentence) - self.n - 1)
+        p = self.nodes[score_to_index(state)].ngram_model.entropy(split_sentence) * (len(split_sentence) - (self.n - 1))
         return p
 
     #Outputs a sequence of sentiments using the viterbi algorithm
@@ -230,13 +235,15 @@ class HMM:
             for y in self.nodes:
                 id = y.id
                 #Double check that transition_prob gets y.id and not y0.id
-                (prob, state) = min([(log_3sum(V[t-1][score_to_index(y0.id)], (-1 * math.log(y.get_transition_probability(y0.id))), self.get_log_prob(sentence_list[t], y0.id)), y0.id) for y0 in self.nodes])
+                (prob, state) = min([(log_3sum(V[t-1][score_to_index(y0.id)], (-1 * math.log(y.get_transition_probability(y0.id))), (self.get_log_prob(sentence_list[t], y0.id))), y0.id) for y0 in self.nodes])
                 V[t][score_to_index(y.id)] = prob
                 newpath[score_to_index(y.id)] = path[score_to_index(state)] + [score_to_index(y.id)]
-            #print(str(state))
+         
             # Don't need to remember the old paths
             path = newpath
+        #print(str(state))
         (prob, state) = min([(V[len(sentence_list) - 1][score_to_index(y.id)], y.id) for y in self.nodes])
+        #print(str(path[score_to_index(state)][0]))
         return path[score_to_index(state)]
 
 
@@ -252,8 +259,8 @@ for p in attempts:
     p = p - 2
     if ans[i] == p:
         correct += 1
-    else:
-        print("Attempt: " + str(p) + " Ans: " + str(ans[i]))
+   # else:
+        #print("Attempt: " + str(p) + " Ans: " + str(ans[i]))
     i += 1
     total += 1
 '''
