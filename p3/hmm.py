@@ -1,4 +1,4 @@
-import sys, nltk, re, math, string, pickle
+import sys, nltk, re, math, string, pickle, ngram
 from nltk.stem.porter import PorterStemmer
 from nltk.corpus import brown
 from nltk.model import NgramModel
@@ -164,7 +164,8 @@ class HMM:
             est = lambda fdist, bins: LidstoneProbDist(fdist, 0.2)
             #est = lambda fdist, bins: GoodTuringProbDist(fdist)
             for node in self.nodes:
-                node.ngram_model = NgramModel(self.n, node.sentence_list, estimator=est)
+                #node.ngram_model = NgramModel(self.n, node.sentence_list, estimator=est)
+                node.ngram_model = ngram.Gram(self.n, node.sentence_list, 2)
             #with open('supervised_training.pickle', 'wb') as f: 
             #    pickle.dump(self.wsd, f)
             #    print("Done pickling")
@@ -181,6 +182,11 @@ class HMM:
             for line in data:
                 # Check to see if it is a review header
                 if (line[0] == '[' or line[0] == '\n'):
+                    if len(l) > 0:
+                        t = self.viterbi(l)
+                        assert len(t) == len(l)
+                        ans += self.viterbi(l)
+                    l = list()
                     continue
 
                 # Check to see if it is a paragraph header
@@ -195,7 +201,7 @@ class HMM:
                     l.append(line)
             print("Finished parsing test data")
             #return self.viterbi(l)
-            #return ans
+            return ans
             return self.viterbi(l)
 
     def get_initial_prob(self, state):
@@ -211,7 +217,15 @@ class HMM:
         if split_sentence[0] == '{}':
             split_sentence = split_sentence[1:]
         split_sentence = filter(split_sentence)
-        p = self.nodes[score_to_index(state)].ngram_model.entropy(split_sentence) * (len(split_sentence) - self.n - 1)
+        p = self.nodes[score_to_index(state)].ngram_model.entropy(split_sentence) * (len(split_sentence) - (self.n - 1))
+        return p
+
+    def get_log_prob2(self, sentence, state):
+        split_sentence = sentence.split(" ")[0:-1]
+        if split_sentence[0] == '{}':
+            split_sentence = split_sentence[1:]
+        split_sentence = filter(split_sentence)
+        p = self.nodes[score_to_index(state)].ngram_model.getLogProb(split_sentence)
         return p
 
     #Outputs a sequence of sentiments using the viterbi algorithm
@@ -220,7 +234,7 @@ class HMM:
         path = {}
         # Initialize base cases (t == 0)
         for y in self.nodes:
-            V[0][score_to_index(y.id)] = (-1 * math.log(self.get_initial_prob(y.id))) + self.get_log_prob(sentence_list[0], y.id)
+            V[0][score_to_index(y.id)] = (-1 * math.log(self.get_initial_prob(y.id))) + self.get_log_prob2(sentence_list[0], y.id)
             path[score_to_index(y.id)] = [y.id]
 
         # Run Viterbi for t > 0
@@ -231,17 +245,19 @@ class HMM:
             for y in self.nodes:
                 id = y.id
                 #Double check that transition_prob gets y.id and not y0.id
-                (prob, state) = min([(log_3sum(V[t-1][score_to_index(y0.id)], (-1 * math.log(y.get_transition_probability(y0.id))), self.get_log_prob(sentence_list[t], y0.id)), y0.id) for y0 in self.nodes])
+                (prob, state) = min([(log_3sum(V[t-1][score_to_index(y0.id)], (-1 * math.log(y.get_transition_probability(y0.id))), (self.get_log_prob2(sentence_list[t], y0.id))), y0.id) for y0 in self.nodes])
                 V[t][score_to_index(y.id)] = prob
                 newpath[score_to_index(y.id)] = path[score_to_index(state)] + [score_to_index(y.id)]
-            #print(str(state))
+         
             # Don't need to remember the old paths
             path = newpath
+        #print(str(state))
         (prob, state) = min([(V[len(sentence_list) - 1][score_to_index(y.id)], y.id) for y in self.nodes])
+        #print(str(path[score_to_index(state)][0]))
         return path[score_to_index(state)]
 
 
-testhmm = HMM([-2, -1, 0, 1, 2], "Testing", 6)
+testhmm = HMM([-2, -1, 0, 1, 2], "Testing", 2)
 testhmm.train("ds_val_train.txt")
 
 attempts = testhmm.test("ds_val_test.txt")
@@ -253,8 +269,8 @@ for p in attempts:
     p = p - 2
     if ans[i] == p:
         correct += 1
-    else:
-        print("Attempt: " + str(p) + " Ans: " + str(ans[i]))
+   # else:
+        #print("Attempt: " + str(p) + " Ans: " + str(ans[i]))
     i += 1
     total += 1
 '''
