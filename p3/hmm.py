@@ -2,10 +2,23 @@ import sys, nltk, re, math, string, pickle
 from nltk.stem.porter import PorterStemmer
 from nltk.corpus import brown
 from nltk.model import NgramModel
-from nltk.probability import LidstoneProbDist
+from nltk.probability import LidstoneProbDist, GoodTuringProbDist
+from nltk.corpus import stopwords
 
 def score_to_index(score):
     return score + 2
+
+def filter(word_list):
+    return word_list
+    l = list()
+    for w in word_list:
+        if not w in stopwords.words('english'):
+            l.append(w)
+    if len(l) < 6:
+        return word_list
+    return l
+
+
 
 #a = log(x)
 #b = log(y)
@@ -24,8 +37,35 @@ def log_sum(a, c):
 #http://en.wikipedia.org/wiki/List_of_logarithmic_identities#Summation.2Fsubtraction
 
 def log_3sum(a, b, c):
+    #print("V\t" + str(a) + "\tTrans\t" + str(b) + "\tEmit\t" + str(c))
     #return math.log(a) + math.log(1+math.exp(math.log(b)+math.log(1+math.exp(math.log(c)-math.log(b)))-math.log(a)))
     return a + b + c
+
+def get_ans(filename):
+    data = open(filename, 'r')
+    scores = list()
+    if (data == None):
+        print("Error: Training file not found")
+    else:
+        # Initialize 
+        data = data.readlines()
+        for line in data:
+            # Check to see if it is a review header
+            if (line[0] == '[' or line[0] == '\n'):
+                continue 
+            # Check to see if it is a paragraph header
+            if (line[0] == '{'):
+                line = line.split(' ')
+                score = int(re.findall(r'-?\d', line[-1])[0])
+                scores.append(score)
+            # For all other sentences
+            else:
+                line = line.split(' ')
+                score = (re.findall(r'-?\d', line[-1]))
+                score = int(score[0])
+                scores.append(score)
+        return scores
+
 
 class Node:
 
@@ -44,9 +84,9 @@ class Node:
         self.transition_counts = [0]*num_states
         self.paragraph_count = 0
 
-    #Get the probability of transitioning from the previous score to the current score
-    def get_transition_probability(self, prev_score):
-        new_index = score_to_index(prev_score)
+    #Get the probability of transitioning from current score to next score
+    def get_transition_probability(self, next_score):
+        new_index = score_to_index(next_score)
         total_transitions = 0
         for i in self.transition_counts:
             total_transitions += i
@@ -114,12 +154,14 @@ class HMM:
                     else:
                         score = int(score[0])
                     index = score_to_index(score)
-                    self.nodes[score_to_index(score)].sentence_list.append(line)
+                    self.nodes[score_to_index(score)].sentence_list.append(filter(line))
+                    
                 self.nodes[score_to_index(self.prev_score)].transition_counts[score_to_index(score)] += 1
                 self.nodes[score_to_index(score)].count += 1
                 self.prev_score = score
             print("Finished generating training data")
             est = lambda fdist, bins: LidstoneProbDist(fdist, 0.2)
+            #est = lambda fdist, bins: GoodTuringProbDist(fdist)
             for node in self.nodes:
                 node.ngram_model = NgramModel(self.n, node.sentence_list, estimator=est)
             #with open('supervised_training.pickle', 'wb') as f: 
@@ -129,6 +171,7 @@ class HMM:
     def test(self, filename):
         data = open(filename, 'r')
         l = list()
+        ans = list()
         if (data == None):
             print("Error: Training file not found")
         else:
@@ -141,13 +184,18 @@ class HMM:
 
                 # Check to see if it is a paragraph header
                 if (line[0] == '{'):
+                    #if len(l) > 0:
+                        #ans += self.viterbi(l)
+                    #l = list()
                     self.num_paragraphs += 1
                     l.append(line)
                 # For all other sentences
                 else:
                     l.append(line)
             print("Finished parsing test data")
-            print(str(self.viterbi(l)))
+            #return self.viterbi(l)
+            #return ans
+            return self.viterbi(l)
 
     def get_initial_prob(self, state):
         #Naive way
@@ -161,15 +209,17 @@ class HMM:
         split_sentence = sentence.split(" ")[0:-1]
         if split_sentence[0] == '{}':
             split_sentence = split_sentence[1:]
+        split_sentence = filter(split_sentence)
         p = self.nodes[score_to_index(state)].ngram_model.entropy(split_sentence) * (len(split_sentence) - self.n - 1)
         return p
+
     #Outputs a sequence of sentiments using the viterbi algorithm
     def viterbi(self, sentence_list):
         V = [{}]
         path = {}
         # Initialize base cases (t == 0)
         for y in self.nodes:
-            V[0][score_to_index(y.id)] = math.log(self.get_initial_prob(y.id)) + self.get_log_prob(sentence_list[0], y.id)
+            V[0][score_to_index(y.id)] = (-1 * math.log(self.get_initial_prob(y.id))) + self.get_log_prob(sentence_list[0], y.id)
             path[score_to_index(y.id)] = [y.id]
 
         # Run Viterbi for t > 0
@@ -180,21 +230,40 @@ class HMM:
             for y in self.nodes:
                 id = y.id
                 #Double check that transition_prob gets y.id and not y0.id
-                (prob, state) = max([(log_3sum(V[t-1][score_to_index(y0.id)], (-1 * math.log(y0.get_transition_probability(y.id))), self.get_log_prob(sentence_list[t], y0.id)), y0.id) for y0 in self.nodes])
+                (prob, state) = min([(log_3sum(V[t-1][score_to_index(y0.id)], (-1 * math.log(y.get_transition_probability(y0.id))), self.get_log_prob(sentence_list[t], y0.id)), y0.id) for y0 in self.nodes])
                 V[t][score_to_index(y.id)] = prob
                 newpath[score_to_index(y.id)] = path[score_to_index(state)] + [score_to_index(y.id)]
             #print(str(state))
             # Don't need to remember the old paths
             path = newpath
-        (prob, state) = max([(V[len(sentence_list) - 1][score_to_index(y.id)], y.id) for y in self.nodes])
+        (prob, state) = min([(V[len(sentence_list) - 1][score_to_index(y.id)], y.id) for y in self.nodes])
         return path[score_to_index(state)]
 
 
-testhmm = HMM([-2, -1, 0, 1, 2], "Testing", 2)
-testhmm.train("DennisSchwartz_train.txt")
-print(str((testhmm.nodes[0].count)))
-print(str((testhmm.nodes[2].count)))
-testhmm.test("DennisSchwartz_test.txt")
+testhmm = HMM([-2, -1, 0, 1, 2], "Testing", 6)
+testhmm.train("ds_val_train.txt")
+
+attempts = testhmm.test("ds_val_test.txt")
+ans = get_ans("ds_val_test.txt")
+i = 0
+correct = 0
+total = 0
+for p in attempts:
+    p = p - 2
+    if ans[i] == p:
+        correct += 1
+    else:
+        print("Attempt: " + str(p) + " Ans: " + str(ans[i]))
+    i += 1
+    total += 1
+'''
+for m in testhmm.nodes:
+    for n in testhmm.nodes:
+        print(str(m.id) + " to " + str(n.id) + " = \t" + str(m.get_transition_probability(n.id)))
+'''
+print("Accuracy: " + str(float(correct) / float(total)))
+
+
 #print(str(testhmm.nodes[1].transition_counts))
 '''
 est = lambda fdist, bins: LidstoneProbDist(fdist, 0.2)
