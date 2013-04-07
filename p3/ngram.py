@@ -22,38 +22,39 @@ class Gram:
         unique_ngrams = 0
         self.vocab = set()
         previous = list()   # Sentences are NOT independent of one another. 
-        word_generator = self.text_parse(text)
-        for word in word_generator:
-            self.vocab.add(word)
-            #Maintain queue of n most recent words
-            previous.append(word)
-            if len(previous) < n:
-                continue
-            self.total_grams += 1
-            while len(previous) > n:
-                previous.pop(0)
-            # Updating the occurence counts
-            temp = copy.deepcopy(previous)
-            nthWord = temp.pop()
-            nMinusOneKey = str(temp)
-            if nMinusOneKey in self.dictionary:
-                miniDict = self.dictionary[nMinusOneKey] #Copy or pointer?
-                if nthWord in miniDict:
-                    miniDict[nthWord]+= 1
+        #word_generator = self.text_parse(text)
+        for sentence in text:
+            for word in sentence:
+                self.vocab.add(word)
+                #Maintain queue of n most recent words
+                previous.append(word)
+                if len(previous) < n:
+                    continue
+                self.total_grams += 1
+                while len(previous) > n:
+                    previous.pop(0)
+                # Updating the occurence counts
+                temp = copy.deepcopy(previous)
+                nthWord = temp.pop()
+                nMinusOneKey = str(temp)
+                if nMinusOneKey in self.dictionary:
+                    miniDict = self.dictionary[nMinusOneKey] #Copy or pointer?
+                    if nthWord in miniDict:
+                        miniDict[nthWord]+= 1
+                    else:
+                        miniDict[nthWord] = 1
+                        unique_ngrams+=1
                 else:
-                    miniDict[nthWord] = 1
+                    self.dictionary[nMinusOneKey] = {nthWord : 1}
+                    self.unique_words+=1
                     unique_ngrams+=1
-            else:
-                self.dictionary[nMinusOneKey] = {nthWord : 1}
-                self.unique_words+=1
-                unique_ngrams+=1
-            # Keeping track of counts in the countList
-            if (self.smoothing_bound > 0):
-                count = self.dictionary[nMinusOneKey][nthWord]
-                if count > 1 and count <= (self.smoothing_bound+1):
-                    self.count_list[count-1] -= 1
-                if count <= self.smoothing_bound:
-                    self.count_list[count] += 1
+                # Keeping track of counts in the countList
+                if (self.smoothing_bound > 0):
+                    count = self.dictionary[nMinusOneKey][nthWord]
+                    if count > 1 and count <= (self.smoothing_bound+1):
+                        self.count_list[count-1] -= 1
+                    if count <= self.smoothing_bound:
+                        self.count_list[count] += 1
 
         self.unique_words = len(self.vocab)
         self.count_list[0] = self.unique_words**n - unique_ngrams
@@ -90,13 +91,13 @@ class Gram:
     #n: the n in n-gram
     #output: a score proportional to the probability of the sentence coming from that model
     #Handling unknowns... hmmm
-    def getPerplexity(self, text):
+    def getLogProb(self, text):
         p = 1.0
         lst = list()
-        word_generator = self.text_parse(text)
+        #word_generator = self.text_parse(text)
         length = 0
         try:
-            for word in word_generator:
+            for word in text:
                 length += 1
                 #Maintain queue of n most recent words
                 lst.append(word) 
@@ -134,8 +135,8 @@ class Gram:
                     denominator += float(self.unique_words - i) * zero_count
                 else:
                     print("Hit a spot where it should never go.")
-                p += math.log10(denominator / numerator)
-            return 10**(p * (1. / float(length)))   
+                p += math.log(denominator / numerator)
+            return p   
         except:
             #print("Infinity")
             return 0
