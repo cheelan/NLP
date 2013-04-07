@@ -9,16 +9,16 @@ def score_to_index(score):
     return score + 2
 
 def filter(word_list):
-    return word_list
+    # Initialize Porter Stemmer for stemming
+    ps = PorterStemmer()
     l = list()
     for w in word_list:
         if not w in stopwords.words('english'):
+            w = ps.stem(w)
             l.append(w)
     if len(l) < 6:
         return word_list
     return l
-
-
 
 #a = log(x)
 #b = log(y)
@@ -129,12 +129,11 @@ class HMM:
             # Initialize 
             data = data.readlines()
             for line in data:
-                # Check to see if it is a review header
+                # Check to see if it is a review header or empty line
                 if (line[0] == '[' or line[0] == '\n'):
                     continue
                 # Increment total number of sentences parsed.
-                self.num_sentences += 1
-                
+                self.num_sentences += 1                
                 # Check to see if it is a paragraph header
                 if (line[0] == '{'):
                     self.num_paragraphs += 1
@@ -143,6 +142,8 @@ class HMM:
                     #score = int(line[-1][1:-1])
                     #par_score = int(line[0][1:-1])
                     #par_score = re.findall(r'\b\d+\b', line[0])[0]
+
+
                     self.nodes[score_to_index(score)].sentence_list.append(line[1:-1])
                     self.nodes[score_to_index(score)].paragraph_count += 1
                 # For all other sentences
