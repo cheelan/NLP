@@ -10,6 +10,7 @@ def score_to_index(score):
 
 def filter(word_list):
     # Initialize Porter Stemmer for stemming
+    return word_list
     ps = PorterStemmer()
     l = list()
     for w in word_list:
@@ -164,8 +165,8 @@ class HMM:
             est = lambda fdist, bins: LidstoneProbDist(fdist, 0.2)
             #est = lambda fdist, bins: GoodTuringProbDist(fdist)
             for node in self.nodes:
-                #node.ngram_model = NgramModel(self.n, node.sentence_list, estimator=est)
-                node.ngram_model = ngram.Gram(self.n, node.sentence_list, 2)
+                node.ngram_model = NgramModel(self.n, node.sentence_list, estimator=est)
+                #node.ngram_model = ngram.Gram(self.n, node.sentence_list, 2)
             #with open('supervised_training.pickle', 'wb') as f: 
             #    pickle.dump(self.wsd, f)
             #    print("Done pickling")
@@ -185,7 +186,7 @@ class HMM:
                     if len(l) > 0:
                         t = self.viterbi(l)
                         assert len(t) == len(l)
-                        ans += self.viterbi(l)
+                        ans += t
                     l = list()
                     continue
 
@@ -226,7 +227,7 @@ class HMM:
             split_sentence = split_sentence[1:]
         split_sentence = filter(split_sentence)
         p = self.nodes[score_to_index(state)].ngram_model.getLogProb(split_sentence)
-        return p
+        return -1 * p
 
     #Outputs a sequence of sentiments using the viterbi algorithm
     def viterbi(self, sentence_list):
@@ -234,7 +235,7 @@ class HMM:
         path = {}
         # Initialize base cases (t == 0)
         for y in self.nodes:
-            V[0][score_to_index(y.id)] = (-1 * math.log(self.get_initial_prob(y.id))) + self.get_log_prob2(sentence_list[0], y.id)
+            V[0][score_to_index(y.id)] = (-1 * math.log(self.get_initial_prob(y.id))) + self.get_log_prob(sentence_list[0], y.id)
             path[score_to_index(y.id)] = [y.id]
 
         # Run Viterbi for t > 0
@@ -245,7 +246,7 @@ class HMM:
             for y in self.nodes:
                 id = y.id
                 #Double check that transition_prob gets y.id and not y0.id
-                (prob, state) = min([(log_3sum(V[t-1][score_to_index(y0.id)], (-1 * math.log(y.get_transition_probability(y0.id))), (self.get_log_prob2(sentence_list[t], y0.id))), y0.id) for y0 in self.nodes])
+                (prob, state) = min([(log_3sum(V[t-1][score_to_index(y0.id)], (-1 * math.log(y0.get_transition_probability(y.id))), (self.get_log_prob(sentence_list[t], y.id))), y0.id) for y0 in self.nodes])
                 V[t][score_to_index(y.id)] = prob
                 newpath[score_to_index(y.id)] = path[score_to_index(state)] + [score_to_index(y.id)]
          
