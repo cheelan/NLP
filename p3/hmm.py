@@ -10,7 +10,7 @@ def score_to_index(score):
 
 def filter(word_list):
     # Initialize Porter Stemmer for stemming
-    return word_list
+    return word_list        # turns off stemming
     ps = PorterStemmer()
     l = list()
     for w in word_list:
@@ -187,6 +187,7 @@ class HMM:
                         t = self.viterbi(l)
                         assert len(t) == len(l)
                         ans += t
+                        #print(ans)
                     l = list()
                     continue
 
@@ -204,6 +205,43 @@ class HMM:
             #return self.viterbi(l)
             return ans
             return self.viterbi(l)
+            
+    def testParagraph(self, filename):
+        data = open(filename, 'r')
+        l = list()
+        ans = list()
+        paragraphScore = 0
+        if (data == None):
+            print("Error: Training file not found")
+        else:
+            # Initialize 
+            data = data.readlines()
+            for line in data:
+                # Check to see if it is a review header
+                if (line[0] == '[' or line[0] == '\n'):
+                    if len(l) > 0:
+                        t = self.viterbi(l)
+                        assert len(t) == len(l)
+                        ans += t
+                    l = list()
+                    continue
+
+                # Check to see if it is a paragraph header
+                if (line[0] == '{'):
+                    #if len(l) > 0:
+                        #ans += self.viterbi(l)
+                    #l = list()
+                    self.num_paragraphs += 1
+                    l.append(line)
+                    paragraphScore = line.split(' ')
+                    paragraphScore = re.findall(r'-?\d', paragraphScore[0])[0]      # why did you guys type cast to int in the other places?
+                # For all other sentences
+                else:
+                    l.append(line)
+            print("Finished parsing test data")
+            #return self.viterbi(l)
+            return ans
+            return self.viterbi2(l,paragraphScore)
 
     def get_initial_prob(self, state):
         #Naive way
@@ -248,6 +286,35 @@ class HMM:
                 #Double check that transition_prob gets y.id and not y0.id
                 (prob, state) = min([(log_3sum(V[t-1][score_to_index(y0.id)], (-1 * math.log(y0.get_transition_probability(y.id))), (self.get_log_prob(sentence_list[t], y.id))), y0.id) for y0 in self.nodes])
                 V[t][score_to_index(y.id)] = prob
+                #newpath[score_to_index(y.id)] = path[score_to_index(state)] + [score_to_index(y.id)]   # corresponds to p=p-2 in the end, but gives -4 as a guess
+                newpath[score_to_index(y.id)] = path[score_to_index(state)] + [y.id]
+         
+            # Don't need to remember the old paths
+            path = newpath
+        #print(str(state))
+        (prob, state) = min([(V[len(sentence_list) - 1][score_to_index(y.id)], y.id) for y in self.nodes])
+        #print(str(path[score_to_index(state)][0]))
+        return path[score_to_index(state)]
+        
+    #Outputs a sequence of sentiments using the viterbi algorithm
+    def viterbi2(self, sentence_list, start_state):
+        V = [{}]
+        path = {}
+        # Initialize base cases (t == 0)
+        for y in self.nodes:
+            V[0][score_to_index(y.id)] = (-1 * math.log(self.get_initial_prob(y.id))) + self.get_log_prob(sentence_list[0], y.id)
+            path[score_to_index(y.id)] = [y.id]
+
+        # Run Viterbi for t > 0
+        for t in range(1,len(sentence_list)):
+            V.append({})
+            newpath = {}
+            #print(sentence_list[t])
+            for y in self.nodes:
+                id = y.id
+                #Double check that transition_prob gets y.id and not y0.id
+                (prob, state) = min([(log_3sum(V[t-1][score_to_index(y0.id)], (-1 * math.log(y0.get_transition_probability(y.id))), (self.get_log_prob(sentence_list[t], y.id))), y0.id) for y0 in self.nodes])
+                V[t][score_to_index(y.id)] = prob
                 newpath[score_to_index(y.id)] = path[score_to_index(state)] + [score_to_index(y.id)]
          
             # Don't need to remember the old paths
@@ -257,29 +324,64 @@ class HMM:
         #print(str(path[score_to_index(state)][0]))
         return path[score_to_index(state)]
 
-
-testhmm = HMM([-2, -1, 0, 1, 2], "Testing", 2)
+'''
+testhmm = HMM([-2, -1, 0, 1, 2], "Testing", 6)
 testhmm.train("ds_val_train.txt")
 
 attempts = testhmm.test("ds_val_test.txt")
 ans = get_ans("ds_val_test.txt")
+
+#attempts = testhmm.testParagraph("DennisSchwartz_none_merged.txt")
+#ans = get_ans("DennisSchwartz_none_merged")
+
 i = 0
 correct = 0
 total = 0
 for p in attempts:
-    p = p - 2
+    #p=p-2   # corresponds to score_to_index(y.id)
     if ans[i] == p:
         correct += 1
-   # else:
-        #print("Attempt: " + str(p) + " Ans: " + str(ans[i]))
+    else:
+        print("Attempt: " + str(p) + " Ans: " + str(ans[i]))
     i += 1
     total += 1
+'''
+    
 '''
 for m in testhmm.nodes:
     for n in testhmm.nodes:
         print(str(m.id) + " to " + str(n.id) + " = \t" + str(m.get_transition_probability(n.id)))
 '''
+
+'''
 print("Accuracy: " + str(float(correct) / float(total)))
+
+countForRMS=0
+squareSum=0.
+for p in attempts:
+    #p=p-2   # corresponds to score_to_index(y.id)
+    diffSq= (ans[countForRMS]-p)**2
+    squareSum += diffSq
+    countForRMS += 1
+RMS=(squareSum/len(attempts))**(1/2)
+
+print("RMS: " + str(RMS))
+'''
+
+### KAGGLE stuff ###
+
+testhmm = HMM([-2, -1, 0, 1, 2], "Testing", 6)
+'''
+testhmm.train("DennisSchwartz_train.txt")
+attempts = testhmm.test("DennisSchwartz_test.txt")
+'''
+testhmm.train("ScottRenshaw_train.txt")
+attempts = testhmm.test("ScottRenshaw_test.txt")
+
+hmmResults = open("HMMResults.csv", 'w')
+for p in attempts:
+    hmmResults.write(str(p) + '\n')
+
 
 
 #print(str(testhmm.nodes[1].transition_counts))
