@@ -207,6 +207,7 @@ class HMM:
             return self.viterbi(l)
             
     def testParagraph(self, filename):
+        initialState = [0,0,0,0,0]
         data = open(filename, 'r')
         l = list()
         ans = list()
@@ -234,7 +235,9 @@ class HMM:
                     self.num_paragraphs += 1
                     l.append(line)
                     paragraphScore = line.split(' ')
-                    paragraphScore = re.findall(r'-?\d', paragraphScore[0])[0]      # why did you guys type cast to int in the other places?
+                    paragraphScore = int(re.findall(r'-?\d', paragraphScore[0])[0])      # why did you guys type cast to int in the other places?
+                    print(str(paragraphScore))
+                    initialState[score_to_index(paragraphScore)]+=1
                 # For all other sentences
                 else:
                     l.append(line)
@@ -324,12 +327,18 @@ class HMM:
         #print(str(path[score_to_index(state)][0]))
         return path[score_to_index(state)]
 
-'''
-testhmm = HMM([-2, -1, 0, 1, 2], "Testing", 6)
-testhmm.train("ds_val_train.txt")
 
+testhmm = HMM([-2, -1, 0, 1, 2], "Testing", 6)
+'''
+testhmm.train("ds_val_train.txt")
 attempts = testhmm.test("ds_val_test.txt")
 ans = get_ans("ds_val_test.txt")
+'''
+
+testhmm.train("DennisSchwartz_train.txt")
+attempts = testhmm.testParagraph("DennisSchwartz_none_merged.txt")
+ans = get_ans("DennisSchwartz_none_merged.txt")
+
 
 #attempts = testhmm.testParagraph("DennisSchwartz_none_merged.txt")
 #ans = get_ans("DennisSchwartz_none_merged")
@@ -345,35 +354,38 @@ for p in attempts:
         print("Attempt: " + str(p) + " Ans: " + str(ans[i]))
     i += 1
     total += 1
-'''
     
-'''
-for m in testhmm.nodes:
-    for n in testhmm.nodes:
-        print(str(m.id) + " to " + str(n.id) + " = \t" + str(m.get_transition_probability(n.id)))
-'''
 
-'''
 print("Accuracy: " + str(float(correct) / float(total)))
 
 countForRMS=0
 squareSum=0.
 for p in attempts:
     #p=p-2   # corresponds to score_to_index(y.id)
-    diffSq= (ans[countForRMS]-p)**2
+    diffSq= (float(ans[countForRMS])-p)**2
     squareSum += diffSq
     countForRMS += 1
-RMS=(squareSum/len(attempts))**(1/2)
+#print(squareSum)
+#print(len(attempts))
+#print(squareSum/len(attempts))
+RMS=(squareSum/len(attempts))**(0.5)
 
 print("RMS: " + str(RMS))
+
 '''
+for m in testhmm.nodes:
+    for n in testhmm.nodes:
+        print(str(m.id) + " to " + str(n.id) + " = \t" + str(m.get_transition_probability(n.id)))
+'''
+
 
 ### KAGGLE stuff ###
 
-testhmm = HMM([-2, -1, 0, 1, 2], "Testing", 6)
+#testhmm = HMM([-2, -1, 0, 1, 2], "Testing", 6)
 '''
 testhmm.train("DennisSchwartz_train.txt")
 attempts = testhmm.test("DennisSchwartz_test.txt")
+'''
 '''
 testhmm.train("ScottRenshaw_train.txt")
 attempts = testhmm.test("ScottRenshaw_test.txt")
@@ -381,7 +393,7 @@ attempts = testhmm.test("ScottRenshaw_test.txt")
 hmmResults = open("HMMResults.csv", 'w')
 for p in attempts:
     hmmResults.write(str(p) + '\n')
-
+'''
 
 
 #print(str(testhmm.nodes[1].transition_counts))
