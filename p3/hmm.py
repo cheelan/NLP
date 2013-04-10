@@ -5,11 +5,9 @@ from nltk.model import NgramModel
 from nltk.probability import LidstoneProbDist, GoodTuringProbDist
 from nltk.corpus import stopwords
 
-# Converts the score number to index number
 def score_to_index(score):
     return score + 2
 
-# Filters out words that are not useful. Removes all instances of stopwords and performs Porter stemming. 
 def filter(word_list):
     # Initialize Porter Stemmer for stemming
     return word_list        # turns off stemming
@@ -23,7 +21,6 @@ def filter(word_list):
         return word_list
     return l
 
-'''
 #a = log(x)
 #b = log(y)
 #returns log(x+y)
@@ -35,17 +32,16 @@ def log_sum(a, c):
         c = a
         a = t
     return a + math.log(1+math.e**(c-a))
-'''
 
 #This will work to calculate log(a+b+c)
 #See the equation after "more generally" at
 #http://en.wikipedia.org/wiki/List_of_logarithmic_identities#Summation.2Fsubtraction
+
 def log_3sum(a, b, c):
     #print("V\t" + str(a) + "\tTrans\t" + str(b) + "\tEmit\t" + str(c))
     #return math.log(a) + math.log(1+math.exp(math.log(b)+math.log(1+math.exp(math.log(c)-math.log(b)))-math.log(a)))
     return a + b + c
 
-# Open the training file and extract the scores of the individual sentences for testing purposes. 
 def get_ans(filename):
     data = open(filename, 'r')
     scores = list()
@@ -66,12 +62,15 @@ def get_ans(filename):
             # For all other sentences
             else:
                 line = line.split(' ')
-                score = int(re.findall(r'-?\d', line[-1])[0])
+                score = (re.findall(r'-?\d', line[-1]))
+                score = int(score[0])
                 scores.append(score)
         return scores
 
 
 class Node:
+
+
     #If we use NLTK for n-gram stuff, you can't add new training data to an existing model
     #Therefore, we'll need to keep track of a list of sentences, and append to that throughout
     #the training process. When that's done, generate an nltk ngram model. In order to go with this,
@@ -139,15 +138,26 @@ class HMM:
                 # Check to see if it is a paragraph header
                 if (line[0] == '{'):
                     self.num_paragraphs += 1
-                    line = line.split()
+                    line = line.split(' ')
                     score = int(re.findall(r'-?\d', line[-1])[0])
-                    self.nodes[score_to_index(score)].sentence_list.append(filter(line[1:-1]))
+                    #score = int(line[-1][1:-1])
+                    #par_score = int(line[0][1:-1])
+                    #par_score = re.findall(r'\b\d+\b', line[0])[0]
+
+
+                    self.nodes[score_to_index(score)].sentence_list.append(line[1:-1])
                     self.nodes[score_to_index(score)].paragraph_count += 1
                 # For all other sentences
                 else:
-                    line = line.split()
-                    score = int(re.findall(r'-?\d', line[-1])[0])
-                    self.nodes[score_to_index(score)].sentence_list.append(filter(line[:-1]))
+                    line = line.split(' ')
+                    score = (re.findall(r'-?\d', line[-1]))
+                    if len(score) < 1:
+                        x = 2
+                    else:
+                        score = int(score[0])
+                    index = score_to_index(score)
+                    self.nodes[score_to_index(score)].sentence_list.append(filter(line))
+                    
                 self.nodes[score_to_index(self.prev_score)].transition_counts[score_to_index(score)] += 1
                 self.nodes[score_to_index(score)].count += 1
                 self.prev_score = score
@@ -173,24 +183,29 @@ class HMM:
             for line in data:
                 # Check to see if it is a review header
                 if (line[0] == '[' or line[0] == '\n'):
-                    if len(l) > 0:
+                    '''if len(l) > 0:
                         t = self.viterbi(l)
                         assert len(t) == len(l)
                         ans += t
                         #print(ans)
-                    l = list()
+                    l = list()'''
                     continue
+
                 # Check to see if it is a paragraph header
                 if (line[0] == '{'):
+                    #if len(l) > 0:
+                        #ans += self.viterbi(l)
+                    #l = list()
+                    self.num_paragraphs += 1
                     l.append(line)
                 # For all other sentences
                 else:
                     l.append(line)
             print("Finished parsing test data")
+            return self.viterbi(l)
             return ans
             return self.viterbi(l)
-
-    '''           
+            
     def testParagraph(self, filename):
         initialState = [0,0,0,0,0]
         data = open(filename, 'r')
@@ -230,7 +245,6 @@ class HMM:
             #return self.viterbi(l)
             return ans
             return self.viterbi2(l,paragraphScore)
-    '''
 
     def get_initial_prob(self, state):
         #Naive way
@@ -248,8 +262,6 @@ class HMM:
         p = self.nodes[score_to_index(state)].ngram_model.entropy(split_sentence) * (len(split_sentence) - (self.n - 1))
         return p
 
-    '''
-    # Returns an approximation of the log probability of a sentence appearing in the specified state. Uses our own getLogProb function.
     def get_log_prob2(self, sentence, state):
         split_sentence = sentence.split(" ")[0:-1]
         if split_sentence[0] == '{}':
@@ -257,7 +269,6 @@ class HMM:
         split_sentence = filter(split_sentence)
         p = self.nodes[score_to_index(state)].ngram_model.getLogProb(split_sentence)
         return -1 * p
-    '''
 
     #Outputs a sequence of sentiments using the viterbi algorithm
     def viterbi(self, sentence_list):
@@ -316,25 +327,26 @@ class HMM:
         #print(str(path[score_to_index(state)][0]))
         return path[score_to_index(state)]
 
-
-testhmm = HMM([-2, -1, 0, 1, 2], "Testing", 6)
 '''
+testhmm = HMM([-2, -1, 0, 1, 2], "Testing", 6)
+
 testhmm.train("ds_val_train.txt")
 attempts = testhmm.test("ds_val_test.txt")
 ans = get_ans("ds_val_test.txt")
-'''
+
 
 testhmm.train("DennisSchwartz_train.txt")
 attempts = testhmm.testParagraph("DennisSchwartz_none_merged.txt")
 ans = get_ans("DennisSchwartz_none_merged.txt")
-
+'''
 
 #attempts = testhmm.testParagraph("DennisSchwartz_none_merged.txt")
 #ans = get_ans("DennisSchwartz_none_merged")
 
-# Calculate our accuracy score.
+'''
 i = 0
 correct = 0
+total = 0
 for p in attempts:
     #p=p-2   # corresponds to score_to_index(y.id)
     if ans[i] == p:
@@ -342,7 +354,10 @@ for p in attempts:
     else:
         print("Attempt: " + str(p) + " Ans: " + str(ans[i]))
     i += 1
-print("Accuracy: " + str(float(correct) / float(i)))
+    total += 1
+    
+
+print("Accuracy: " + str(float(correct) / float(total)))
 
 countForRMS=0
 squareSum=0.
@@ -355,9 +370,10 @@ for p in attempts:
 #print(len(attempts))
 #print(squareSum/len(attempts))
 RMS=(squareSum/len(attempts))**(0.5)
+
 print("RMS: " + str(RMS))
 
-'''
+
 for m in testhmm.nodes:
     for n in testhmm.nodes:
         print(str(m.id) + " to " + str(n.id) + " = \t" + str(m.get_transition_probability(n.id)))
@@ -366,19 +382,19 @@ for m in testhmm.nodes:
 
 ### KAGGLE stuff ###
 
-#testhmm = HMM([-2, -1, 0, 1, 2], "Testing", 6)
-'''
+testhmm = HMM([-2, -1, 0, 1, 2], "Testing", 6)
+
 testhmm.train("DennisSchwartz_train.txt")
 attempts = testhmm.test("DennisSchwartz_test.txt")
-'''
+
 '''
 testhmm.train("ScottRenshaw_train.txt")
 attempts = testhmm.test("ScottRenshaw_test.txt")
-
+'''
 hmmResults = open("HMMResults.csv", 'w')
 for p in attempts:
     hmmResults.write(str(p) + '\n')
-'''
+
 
 
 #print(str(testhmm.nodes[1].transition_counts))
