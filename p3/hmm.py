@@ -189,6 +189,7 @@ class HMM:
             print("Finished parsing test data")
             return ans
             return self.viterbi(l)
+
     '''           
     def testParagraph(self, filename):
         initialState = [0,0,0,0,0]
@@ -247,6 +248,8 @@ class HMM:
         p = self.nodes[score_to_index(state)].ngram_model.entropy(split_sentence) * (len(split_sentence) - (self.n - 1))
         return p
 
+    '''
+    # Returns an approximation of the log probability of a sentence appearing in the specified state. Uses our own getLogProb function.
     def get_log_prob2(self, sentence, state):
         split_sentence = sentence.split(" ")[0:-1]
         if split_sentence[0] == '{}':
@@ -254,6 +257,7 @@ class HMM:
         split_sentence = filter(split_sentence)
         p = self.nodes[score_to_index(state)].ngram_model.getLogProb(split_sentence)
         return -1 * p
+    '''
 
     #Outputs a sequence of sentiments using the viterbi algorithm
     def viterbi(self, sentence_list):
@@ -328,9 +332,9 @@ ans = get_ans("DennisSchwartz_none_merged.txt")
 #attempts = testhmm.testParagraph("DennisSchwartz_none_merged.txt")
 #ans = get_ans("DennisSchwartz_none_merged")
 
+# Calculate our accuracy score.
 i = 0
 correct = 0
-total = 0
 for p in attempts:
     #p=p-2   # corresponds to score_to_index(y.id)
     if ans[i] == p:
@@ -338,10 +342,7 @@ for p in attempts:
     else:
         print("Attempt: " + str(p) + " Ans: " + str(ans[i]))
     i += 1
-    total += 1
-    
-
-print("Accuracy: " + str(float(correct) / float(total)))
+print("Accuracy: " + str(float(correct) / float(i)))
 
 countForRMS=0
 squareSum=0.
@@ -354,7 +355,6 @@ for p in attempts:
 #print(len(attempts))
 #print(squareSum/len(attempts))
 RMS=(squareSum/len(attempts))**(0.5)
-
 print("RMS: " + str(RMS))
 
 '''
