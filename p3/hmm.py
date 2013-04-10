@@ -180,22 +180,16 @@ class HMM:
                         #print(ans)
                     l = list()
                     continue
-
                 # Check to see if it is a paragraph header
                 if (line[0] == '{'):
-                    #if len(l) > 0:
-                        #ans += self.viterbi(l)
-                    #l = list()
-                    self.num_paragraphs += 1
                     l.append(line)
                 # For all other sentences
                 else:
                     l.append(line)
             print("Finished parsing test data")
-            #return self.viterbi(l)
             return ans
             return self.viterbi(l)
-            
+    '''           
     def testParagraph(self, filename):
         initialState = [0,0,0,0,0]
         data = open(filename, 'r')
@@ -235,6 +229,7 @@ class HMM:
             #return self.viterbi(l)
             return ans
             return self.viterbi2(l,paragraphScore)
+    '''
 
     def get_initial_prob(self, state):
         #Naive way
