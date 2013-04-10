@@ -5,9 +5,11 @@ from nltk.model import NgramModel
 from nltk.probability import LidstoneProbDist, GoodTuringProbDist
 from nltk.corpus import stopwords
 
+# Converts the score number to index number
 def score_to_index(score):
     return score + 2
 
+# Filters out words that are not useful. Removes all instances of stopwords and performs Porter stemming. 
 def filter(word_list):
     # Initialize Porter Stemmer for stemming
     return word_list        # turns off stemming
@@ -21,6 +23,7 @@ def filter(word_list):
         return word_list
     return l
 
+'''
 #a = log(x)
 #b = log(y)
 #returns log(x+y)
@@ -32,16 +35,17 @@ def log_sum(a, c):
         c = a
         a = t
     return a + math.log(1+math.e**(c-a))
+'''
 
 #This will work to calculate log(a+b+c)
 #See the equation after "more generally" at
 #http://en.wikipedia.org/wiki/List_of_logarithmic_identities#Summation.2Fsubtraction
-
 def log_3sum(a, b, c):
     #print("V\t" + str(a) + "\tTrans\t" + str(b) + "\tEmit\t" + str(c))
     #return math.log(a) + math.log(1+math.exp(math.log(b)+math.log(1+math.exp(math.log(c)-math.log(b)))-math.log(a)))
     return a + b + c
 
+# Open the training file and extract the scores of the individual sentences for testing purposes. 
 def get_ans(filename):
     data = open(filename, 'r')
     scores = list()
@@ -62,15 +66,12 @@ def get_ans(filename):
             # For all other sentences
             else:
                 line = line.split(' ')
-                score = (re.findall(r'-?\d', line[-1]))
-                score = int(score[0])
+                score = int(re.findall(r'-?\d', line[-1])[0])
                 scores.append(score)
         return scores
 
 
 class Node:
-
-
     #If we use NLTK for n-gram stuff, you can't add new training data to an existing model
     #Therefore, we'll need to keep track of a list of sentences, and append to that throughout
     #the training process. When that's done, generate an nltk ngram model. In order to go with this,
@@ -138,26 +139,15 @@ class HMM:
                 # Check to see if it is a paragraph header
                 if (line[0] == '{'):
                     self.num_paragraphs += 1
-                    line = line.split(' ')
+                    line = line.split()
                     score = int(re.findall(r'-?\d', line[-1])[0])
-                    #score = int(line[-1][1:-1])
-                    #par_score = int(line[0][1:-1])
-                    #par_score = re.findall(r'\b\d+\b', line[0])[0]
-
-
-                    self.nodes[score_to_index(score)].sentence_list.append(line[1:-1])
+                    self.nodes[score_to_index(score)].sentence_list.append(filter(line[1:-1]))
                     self.nodes[score_to_index(score)].paragraph_count += 1
                 # For all other sentences
                 else:
-                    line = line.split(' ')
-                    score = (re.findall(r'-?\d', line[-1]))
-                    if len(score) < 1:
-                        x = 2
-                    else:
-                        score = int(score[0])
-                    index = score_to_index(score)
-                    self.nodes[score_to_index(score)].sentence_list.append(filter(line))
-                    
+                    line = line.split()
+                    score = int(re.findall(r'-?\d', line[-1])[0])
+                    self.nodes[score_to_index(score)].sentence_list.append(filter(line[:-1]))
                 self.nodes[score_to_index(self.prev_score)].transition_counts[score_to_index(score)] += 1
                 self.nodes[score_to_index(score)].count += 1
                 self.prev_score = score
