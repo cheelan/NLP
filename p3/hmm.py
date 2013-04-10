@@ -1,9 +1,12 @@
 import sys, nltk, re, math, string, pickle, ngram
 from nltk.stem.porter import PorterStemmer
-from nltk.corpus import brown
 from nltk.model import NgramModel
 from nltk.probability import LidstoneProbDist, GoodTuringProbDist
-from nltk.corpus import stopwords
+#from nltk.corpus import stopwords
+
+nsize = 0
+allowed_pos = ["FW", "JJ", "JJR", "JJS", "NN", "NNS", "NNP", "NNPS", "RB", "RBR", "RBS", "VB", "VBD", "VBG", "VBN", "VBP", "VBZ"]
+#allowed_pos = ["JJ", "JJR", "JJS", "RB", "RBR", "RBS"]
 
 # Converts the score number to index number
 def score_to_index(score):
@@ -11,31 +14,26 @@ def score_to_index(score):
 
 # Filters out words that are not useful. Removes all instances of stopwords and performs Porter stemming. 
 def filter(word_list):
-    # Initialize Porter Stemmer for stemming
-    return word_list        # turns off stemming
+    #return word_list        # turns off stemming
+    filtered_features = list()
+    # Parts of Speech filtering
+    result = nltk.pos_tag(word_list)
+    for i in range(len(result)):
+        if str(result[i][1]) in allowed_pos:
+            filtered_features.append(result[i][0])
+    '''
+    # Porter Stemming & Stopwords Filtering
     ps = PorterStemmer()
-    l = list()
     for w in word_list:
         if not w in stopwords.words('english'):
             w = ps.stem(w)
-            l.append(w)
-    if len(l) < 6:
+            filtered_features.append(w)
+    '''
+    # Check to see if resulting filtered size is big enough. 
+    if len(filtered_features) < nsize:
         return word_list
-    return l
-
-'''
-#a = log(x)
-#b = log(y)
-#returns log(x+y)
-#THIS WONT WORK.
-#Shouldn't this be log(a+c) = log(a) + log(1+(c/a))?
-def log_sum(a, c):
-    if a < c:
-        t = a
-        c = a
-        a = t
-    return a + math.log(1+math.e**(c-a))
-'''
+    else:
+        return filtered_features
 
 #This will work to calculate log(a+b+c)
 #See the equation after "more generally" at
@@ -94,15 +92,6 @@ class Node:
             total_transitions += i
         return float(self.transition_counts[new_index]) / float(total_transitions) 
 
-    #Add this sentence's n-grams to the bucket
-    #Update transition counts
-    def train_sentence(self, sentence, prev):
-        pass
-
-    #Given a sentence, return the a score (proportional to probability) for this model
-    def get_sentence_score(self, sentence, prev):
-        pass
-
 class HMM:
 
     author = ""
@@ -151,15 +140,10 @@ class HMM:
                 self.nodes[score_to_index(self.prev_score)].transition_counts[score_to_index(score)] += 1
                 self.nodes[score_to_index(score)].count += 1
                 self.prev_score = score
-            print("Finished generating training data")
+            #print("Finished generating training data")
             est = lambda fdist, bins: LidstoneProbDist(fdist, 0.2)
-            #est = lambda fdist, bins: GoodTuringProbDist(fdist)
             for node in self.nodes:
                 node.ngram_model = NgramModel(self.n, node.sentence_list, estimator=est)
-                #node.ngram_model = ngram.Gram(self.n, node.sentence_list, 2)
-            #with open('supervised_training.pickle', 'wb') as f: 
-            #    pickle.dump(self.wsd, f)
-            #    print("Done pickling")
 
     def test(self, filename):
         data = open(filename, 'r')
@@ -186,57 +170,11 @@ class HMM:
                 # For all other sentences
                 else:
                     l.append(line)
-            print("Finished parsing test data")
+            #print("Finished parsing test data")
             return ans
             return self.viterbi(l)
 
-    '''           
-    def testParagraph(self, filename):
-        initialState = [0,0,0,0,0]
-        data = open(filename, 'r')
-        l = list()
-        ans = list()
-        paragraphScore = 0
-        if (data == None):
-            print("Error: Training file not found")
-        else:
-            # Initialize 
-            data = data.readlines()
-            for line in data:
-                # Check to see if it is a review header
-                if (line[0] == '[' or line[0] == '\n'):
-                    if len(l) > 0:
-                        t = self.viterbi(l)
-                        assert len(t) == len(l)
-                        ans += t
-                    l = list()
-                    continue
-
-                # Check to see if it is a paragraph header
-                if (line[0] == '{'):
-                    #if len(l) > 0:
-                        #ans += self.viterbi(l)
-                    #l = list()
-                    self.num_paragraphs += 1
-                    l.append(line)
-                    paragraphScore = line.split(' ')
-                    paragraphScore = int(re.findall(r'-?\d', paragraphScore[0])[0])      # why did you guys type cast to int in the other places?
-                    print(str(paragraphScore))
-                    initialState[score_to_index(paragraphScore)]+=1
-                # For all other sentences
-                else:
-                    l.append(line)
-            print("Finished parsing test data")
-            #return self.viterbi(l)
-            return ans
-            return self.viterbi2(l,paragraphScore)
-    '''
-
     def get_initial_prob(self, state):
-        #Naive way
-        #return float(self.nodes[score_to_index(state)].count) / float(self.num_sentences)
-        
-        #Smart way
         return float(self.nodes[score_to_index(state)].paragraph_count) / float(self.num_paragraphs)
 
     #Returns an approximation of the log probability of a sentence appearing in the specified state
@@ -247,17 +185,6 @@ class HMM:
         split_sentence = filter(split_sentence)
         p = self.nodes[score_to_index(state)].ngram_model.entropy(split_sentence) * (len(split_sentence) - (self.n - 1))
         return p
-
-    '''
-    # Returns an approximation of the log probability of a sentence appearing in the specified state. Uses our own getLogProb function.
-    def get_log_prob2(self, sentence, state):
-        split_sentence = sentence.split(" ")[0:-1]
-        if split_sentence[0] == '{}':
-            split_sentence = split_sentence[1:]
-        split_sentence = filter(split_sentence)
-        p = self.nodes[score_to_index(state)].ngram_model.getLogProb(split_sentence)
-        return -1 * p
-    '''
 
     #Outputs a sequence of sentiments using the viterbi algorithm
     def viterbi(self, sentence_list):
@@ -272,7 +199,6 @@ class HMM:
         for t in range(1,len(sentence_list)):
             V.append({})
             newpath = {}
-            #print(sentence_list[t])
             for y in self.nodes:
                 id = y.id
                 #Double check that transition_prob gets y.id and not y0.id
@@ -280,130 +206,54 @@ class HMM:
                 V[t][score_to_index(y.id)] = prob
                 #newpath[score_to_index(y.id)] = path[score_to_index(state)] + [score_to_index(y.id)]   # corresponds to p=p-2 in the end, but gives -4 as a guess
                 newpath[score_to_index(y.id)] = path[score_to_index(state)] + [y.id]
-         
             # Don't need to remember the old paths
             path = newpath
-        #print(str(state))
         (prob, state) = min([(V[len(sentence_list) - 1][score_to_index(y.id)], y.id) for y in self.nodes])
-        #print(str(path[score_to_index(state)][0]))
-        return path[score_to_index(state)]
-        
-    #Outputs a sequence of sentiments using the viterbi algorithm
-    def viterbi2(self, sentence_list, start_state):
-        V = [{}]
-        path = {}
-        # Initialize base cases (t == 0)
-        for y in self.nodes:
-            V[0][score_to_index(y.id)] = (-1 * math.log(self.get_initial_prob(y.id))) + self.get_log_prob(sentence_list[0], y.id)
-            path[score_to_index(y.id)] = [y.id]
-
-        # Run Viterbi for t > 0
-        for t in range(1,len(sentence_list)):
-            V.append({})
-            newpath = {}
-            #print(sentence_list[t])
-            for y in self.nodes:
-                id = y.id
-                #Double check that transition_prob gets y.id and not y0.id
-                (prob, state) = min([(log_3sum(V[t-1][score_to_index(y0.id)], (-1 * math.log(y0.get_transition_probability(y.id))), (self.get_log_prob(sentence_list[t], y.id))), y0.id) for y0 in self.nodes])
-                V[t][score_to_index(y.id)] = prob
-                newpath[score_to_index(y.id)] = path[score_to_index(state)] + [score_to_index(y.id)]
-         
-            # Don't need to remember the old paths
-            path = newpath
-        #print(str(state))
-        (prob, state) = min([(V[len(sentence_list) - 1][score_to_index(y.id)], y.id) for y in self.nodes])
-        #print(str(path[score_to_index(state)][0]))
         return path[score_to_index(state)]
 
 
-testhmm = HMM([-2, -1, 0, 1, 2], "Testing", 6)
-'''
-testhmm.train("ds_val_train.txt")
-attempts = testhmm.test("ds_val_test.txt")
-ans = get_ans("ds_val_test.txt")
-'''
 
-testhmm.train("DennisSchwartz_train.txt")
-attempts = testhmm.testParagraph("DennisSchwartz_none_merged.txt")
-ans = get_ans("DennisSchwartz_none_merged.txt")
-
-
-#attempts = testhmm.testParagraph("DennisSchwartz_none_merged.txt")
-#ans = get_ans("DennisSchwartz_none_merged")
-
-# Calculate our accuracy score.
-i = 0
-correct = 0
-for p in attempts:
-    #p=p-2   # corresponds to score_to_index(y.id)
-    if ans[i] == p:
-        correct += 1
-    else:
-        print("Attempt: " + str(p) + " Ans: " + str(ans[i]))
-    i += 1
-print("Accuracy: " + str(float(correct) / float(i)))
-
-countForRMS=0
-squareSum=0.
-for p in attempts:
-    #p=p-2   # corresponds to score_to_index(y.id)
-    diffSq= (float(ans[countForRMS])-p)**2
-    squareSum += diffSq
-    countForRMS += 1
-#print(squareSum)
-#print(len(attempts))
-#print(squareSum/len(attempts))
-RMS=(squareSum/len(attempts))**(0.5)
-print("RMS: " + str(RMS))
+for num in range(4,11):
+    print("N=" + str(num))
+    nsize=num
+    testhmm = HMM([-2, -1, 0, 1, 2], "Testing", nsize)
+    testhmm.train("ds_val_train.txt")
+    attempts = testhmm.test("ds_val_test.txt")
+    ans = get_ans("ds_val_test.txt")
+    # Calculate our accuracy score.
+    i = 0
+    correct = 0
+    for p in attempts:
+        #p=p-2   # corresponds to score_to_index(y.id)
+        if ans[i] == p:
+            correct += 1
+        #else:
+            #print("Attempt: " + str(p) + " Ans: " + str(ans[i]))
+        i += 1
+    print("Accuracy: " + str(float(correct) / float(i)))
+    countForRMS=0
+    squareSum=0.
+    for p in attempts:
+        diffSq= (float(ans[countForRMS])-p)**2
+        squareSum += diffSq
+        countForRMS += 1
+    RMS=(squareSum/len(attempts))**(0.5)
+    print("RMS: " + str(RMS))
+###########################################################################################
 
 '''
-for m in testhmm.nodes:
-    for n in testhmm.nodes:
-        print(str(m.id) + " to " + str(n.id) + " = \t" + str(m.get_transition_probability(n.id)))
-'''
-
-
 ### KAGGLE stuff ###
-
-#testhmm = HMM([-2, -1, 0, 1, 2], "Testing", 6)
-'''
+testhmm = HMM([-2, -1, 0, 1, 2], "Testing", 6)
 testhmm.train("DennisSchwartz_train.txt")
 attempts = testhmm.test("DennisSchwartz_test.txt")
 '''
 '''
 testhmm.train("ScottRenshaw_train.txt")
 attempts = testhmm.test("ScottRenshaw_test.txt")
-
+'''
+'''
 hmmResults = open("HMMResults.csv", 'w')
 for p in attempts:
     hmmResults.write(str(p) + '\n')
 '''
 
-
-#print(str(testhmm.nodes[1].transition_counts))
-'''
-est = lambda fdist, bins: LidstoneProbDist(fdist, 0.2)
-lm = NgramModel(2, brown.words(categories='news'), estimator=est)
-#lm1 = NgramModel(2, ["apple", "ate", "an", "apple"], estimator=est)
-#lm2 = NgramModel(2, ["nlp", "ran", "cat", "dog"], estimator=est)
-
-sen = "as a coincidence he gave frank some kind of a stress relieving pill the previous night which frank took in a moment of weakness and desperation as he followed mary to this drug pad concerned that she couldnt handle the strain any longer of learning about her fathers death especially when she wasnt able to put a closure on their stormy relationship by having one last chance to talk to him she hasnt even seen her father for the last three years due to an argument"
-sen2 = "askddfesf adsafe asdfhjkbeew jbdajse joiuewoeuih hgjd jgbna jkasdaf"
-sen3 = "We congratulate the entire membership on its record of good legislation"
-
-
-
-split_sentence = sen.split(" ")
-logprob = lm.entropy(split_sentence) + math.log(len(split_sentence))
-
-perplexity = math.exp(-1. * lm.entropy(sen.split(" ")))
-perplexity2 = math.exp(-1. * lm.entropy(sen2.split(" ")))
-perplexity3 = math.exp(-1. * lm.entropy(sen3.split(" ")))
-#print("Words " + str(sen.count(" ")))
-#probability = 1. / float((perplexity ** (sen.count(" "))))
-print(str(perplexity))
-print(str(perplexity2))
-print(str(perplexity3))
-#print(str(probability))
-'''
