@@ -5,8 +5,8 @@ from nltk.probability import LidstoneProbDist, GoodTuringProbDist
 #from nltk.corpus import stopwords
 
 nsize = 0
-allowed_pos = ["FW", "JJ", "JJR", "JJS", "NN", "NNS", "NNP", "NNPS", "RB", "RBR", "RBS", "VB", "VBD", "VBG", "VBN", "VBP", "VBZ"]
-#allowed_pos = ["JJ", "JJR", "JJS", "RB", "RBR", "RBS"]
+#allowed_pos = ["FW", "JJ", "JJR", "JJS", "NN", "NNS", "NNP", "NNPS", "RB", "RBR", "RBS", "VB", "VBD", "VBG", "VBN", "VBP", "VBZ"]
+allowed_pos = ["JJ", "JJR", "JJS", "RB", "RBR", "RBS"]
 
 # Converts the score number to index number
 def score_to_index(score):
@@ -14,26 +14,27 @@ def score_to_index(score):
 
 # Filters out words that are not useful. Removes all instances of stopwords and performs Porter stemming. 
 def filter(word_list):
-    #return word_list        # turns off stemming
+    return word_list        # turns off stemming
+    '''
     filtered_features = list()
     # Parts of Speech filtering
     result = nltk.pos_tag(word_list)
     for i in range(len(result)):
         if str(result[i][1]) in allowed_pos:
             filtered_features.append(result[i][0])
-    '''
-    # Porter Stemming & Stopwords Filtering
+    # Porter Stemming & (possibly) Stopwords Filtering
     ps = PorterStemmer()
-    for w in word_list:
-        if not w in stopwords.words('english'):
-            w = ps.stem(w)
-            filtered_features.append(w)
-    '''
+    stemmed_features = list()
+    for w in filtered_features:
+        #if not w in stopwords.words('english'):
+        stemmed_features.append(ps.stem(w))
+    filtered_features = stemmed_features
     # Check to see if resulting filtered size is big enough. 
     if len(filtered_features) < nsize:
         return word_list
     else:
         return filtered_features
+    '''
 
 #This will work to calculate log(a+b+c)
 #See the equation after "more generally" at
@@ -211,10 +212,9 @@ class HMM:
         (prob, state) = min([(V[len(sentence_list) - 1][score_to_index(y.id)], y.id) for y in self.nodes])
         return path[score_to_index(state)]
 
-
-
+### Local Testing Purposes ###
 for num in range(4,11):
-    print("N=" + str(num))
+    print("N = " + str(num))
     nsize=num
     testhmm = HMM([-2, -1, 0, 1, 2], "Testing", nsize)
     testhmm.train("ds_val_train.txt")
@@ -243,15 +243,15 @@ for num in range(4,11):
 
 '''
 ### KAGGLE stuff ###
-testhmm = HMM([-2, -1, 0, 1, 2], "Testing", 6)
+nsize=5
+print("N = " + str(nsize))
+testhmm = HMM([-2, -1, 0, 1, 2], "Testing", nsize)
 testhmm.train("DennisSchwartz_train.txt")
 attempts = testhmm.test("DennisSchwartz_test.txt")
-'''
-'''
-testhmm.train("ScottRenshaw_train.txt")
-attempts = testhmm.test("ScottRenshaw_test.txt")
-'''
-'''
+
+#testhmm.train("ScottRenshaw_train.txt")
+#attempts = testhmm.test("ScottRenshaw_test.txt")
+
 hmmResults = open("HMMResults.csv", 'w')
 for p in attempts:
     hmmResults.write(str(p) + '\n')
