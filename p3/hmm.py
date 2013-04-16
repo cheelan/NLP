@@ -9,6 +9,7 @@ def score_to_index(score):
     return score + 2
 
 def filter(word_list):
+    common_words = ["film", "story," "one", "even", "like" 
     # Initialize Porter Stemmer for stemming
     return word_list        # turns off stemming
     ps = PorterStemmer()
@@ -67,6 +68,17 @@ def get_ans(filename):
                 scores.append(score)
         return scores
 
+def file_to_dictionary(unigram):
+    dict = {}
+    data = open(unigram, 'r')
+    if (data == None):
+        print("Error: file not found")
+    else:
+        data = data.readlines()
+        for line in data:
+            dict[line.strip()] = 1
+    return dict 
+
 
 class Node:
 
@@ -116,6 +128,9 @@ class HMM:
         self.nodes = [Node(score, n, len(states)) for score in range(-2,3)]
         self.prev_score = self.gen_initial_state()       
         self.author = author
+        self.positive_dictionary = file_to_dictionary("positive-words.txt")
+        self.negative_dictionary = file_to_dictionary("negative-words.txt")
+
 
     #For picking the first state of a paragraph. For now, start at 0, but try fancy things later
     def gen_initial_state(self):
@@ -259,8 +274,11 @@ class HMM:
         if split_sentence[0] == '{}':
             split_sentence = split_sentence[1:]
         split_sentence = filter(split_sentence)
-        p = self.nodes[score_to_index(state)].ngram_model.entropy(split_sentence) * (len(split_sentence) - (self.n - 1))
+        modifier = self.adjust_score(split_sentence, state)
+        p = modifier * self.nodes[score_to_index(state)].ngram_model.entropy(split_sentence) * (len(split_sentence) - (self.n - 1))
+
         return p
+
 
     def get_log_prob2(self, sentence, state):
         split_sentence = sentence.split(" ")[0:-1]
@@ -269,6 +287,33 @@ class HMM:
         split_sentence = filter(split_sentence)
         p = self.nodes[score_to_index(state)].ngram_model.getLogProb(split_sentence)
         return -1 * p
+
+
+
+    def adjust_score(self, sentence_list, state):
+        #return 1
+        '''
+        positives = 0
+        negatives = 0
+        for word in sentence_list:
+            if self.positive_dictionary.has_key(word):
+                positives += 1
+            if self.negative_dictionary.has_key(word):
+                negatives += 1
+        if negatives > (positives) and state > 0:
+            #return (math.fabs(state)+1)
+            return (math.fabs(state)+5)
+        if positives > (negatives) and state < 0:
+            #return (math.fabs(state)+1)
+            #print("It happened")
+            pass
+            #return (math.fabs(state)+5)
+        return 1
+        '''
+        for word in sentence_list:
+            if "masterpiece" in word.strip() and state == 2:
+                return .00001
+        return 1.
 
     #Outputs a sequence of sentiments using the viterbi algorithm
     def viterbi(self, sentence_list):
@@ -327,7 +372,7 @@ class HMM:
         #print(str(path[score_to_index(state)][0]))
         return path[score_to_index(state)]
 
-'''
+
 testhmm = HMM([-2, -1, 0, 1, 2], "Testing", 6)
 
 testhmm.train("ds_val_train.txt")
@@ -335,15 +380,15 @@ attempts = testhmm.test("ds_val_test.txt")
 ans = get_ans("ds_val_test.txt")
 
 
-testhmm.train("DennisSchwartz_train.txt")
-attempts = testhmm.testParagraph("DennisSchwartz_none_merged.txt")
-ans = get_ans("DennisSchwartz_none_merged.txt")
-'''
+#testhmm.train("DennisSchwartz_train.txt")
+#attempts = testhmm.testParagraph("DennisSchwartz_none_merged.txt")
+#ans = get_ans("DennisSchwartz_none_merged.txt")
+
 
 #attempts = testhmm.testParagraph("DennisSchwartz_none_merged.txt")
 #ans = get_ans("DennisSchwartz_none_merged")
 
-'''
+
 i = 0
 correct = 0
 total = 0
@@ -373,13 +418,13 @@ RMS=(squareSum/len(attempts))**(0.5)
 
 print("RMS: " + str(RMS))
 
-
+'''
 for m in testhmm.nodes:
     for n in testhmm.nodes:
         print(str(m.id) + " to " + str(n.id) + " = \t" + str(m.get_transition_probability(n.id)))
 '''
 
-
+'''
 ### KAGGLE stuff ###
 
 testhmm = HMM([-2, -1, 0, 1, 2], "Testing", 6)
@@ -387,15 +432,15 @@ testhmm = HMM([-2, -1, 0, 1, 2], "Testing", 6)
 testhmm.train("DennisSchwartz_train.txt")
 attempts = testhmm.test("DennisSchwartz_test.txt")
 
-'''
+
 testhmm.train("ScottRenshaw_train.txt")
 attempts = testhmm.test("ScottRenshaw_test.txt")
-'''
+
 hmmResults = open("HMMResults.csv", 'w')
 for p in attempts:
     hmmResults.write(str(p) + '\n')
 
-
+'''
 
 #print(str(testhmm.nodes[1].transition_counts))
 '''
