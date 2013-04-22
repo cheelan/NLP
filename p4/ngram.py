@@ -22,8 +22,7 @@ class Gram:
         unique_ngrams = 0
         self.vocab = set()
         previous = list()   # Sentences are NOT independent of one another. 
-        word_generator = self.text_parse(text)
-        for word in word_generator:
+        for word in text:
             self.vocab.add(word)
             #Maintain queue of n most recent words
             previous.append(word)
@@ -33,23 +32,17 @@ class Gram:
             while len(previous) > n:
                 previous.pop(0)
             # Updating the occurence counts
-            temp = copy.deepcopy(previous)
-            nthWord = temp.pop()
-            nMinusOneKey = str(temp)
-            if nMinusOneKey in self.dictionary:
-                miniDict = self.dictionary[nMinusOneKey] #Copy or pointer?
-                if nthWord in miniDict:
-                    miniDict[nthWord]+= 1
-                else:
-                    miniDict[nthWord] = 1
-                    unique_ngrams+=1
+            key = str(previous)
+            if key in self.dictionary:
+                self.dictionary[key] += 1
             else:
-                self.dictionary[nMinusOneKey] = {nthWord : 1}
-                self.unique_words+=1
-                unique_ngrams+=1
+                self.dictionary[key] = 1
+                self.unique_words += 1
+                unique_ngrams += 1
+
             # Keeping track of counts in the countList
             if (self.smoothing_bound > 0):
-                count = self.dictionary[nMinusOneKey][nthWord]
+                count = self.dictionary[key]
                 if count > 1 and count <= (self.smoothing_bound+1):
                     self.count_list[count-1] -= 1
                 if count <= self.smoothing_bound:
@@ -66,10 +59,9 @@ class Gram:
     #Optimization could be to iterate before we fill with zeros - the dict will be much smaller
     def apply_smoothing(self):
         for k in self.dictionary.keys():
-            for k2 in self.dictionary[k].keys():
-                count = self.dictionary[k][k2]
-                if count < self.smoothing_bound:
-                    self.dictionary[k][k2] = (count + 1) * (float(self.count_list[count+1]) / float(self.count_list[count]))
+            count = self.dictionary[k]
+            if count < self.smoothing_bound:
+                self.dictionary[k] = (count + 1) * (float(self.count_list[count+1]) / float(self.count_list[count]))
 
     # Parses the text by removing the HTML tags and creates a generator of the words in the text.
     def text_parse(self, text):
@@ -93,101 +85,39 @@ class Gram:
     def getPerplexity(self, text):
         p = 1.0
         lst = list()
-        word_generator = self.text_parse(text)
         length = 0
-        try:
-            for word in word_generator:
-                length += 1
-                #Maintain queue of n most recent words
-                lst.append(word) 
-                if len(lst) < self.n:
-                    continue
-                while len(lst) > self.n:
-                    lst.pop(0)
-                temp = copy.deepcopy(lst)
-                nMinusOne = str(temp.pop())
-                key = str(temp)
-                #Need to adjust these for unknown words
-                if self.smoothing_bound > 0:
-                    zero_count = float(self.count_list[1]) / float(self.count_list[0])
-                else:
-                    zero_count = 0
-                numerator = 0.
-                denominator = 0.
-
-                if not (key in self.dictionary):
-                    numerator = zero_count
-                    denominator = self.total_grams + (zero_count * self.count_list[0])
-                elif key in self.dictionary and (not (nMinusOne in self.dictionary[key])):
-                    numerator = zero_count
-                    i = 0
-                    for v in self.dictionary[key].values():
-                        i += 1
-                        denominator += v
-                    denominator += float(self.unique_words - i) * zero_count
-                elif key in self.dictionary and nMinusOne in self.dictionary[key]:
-                    i = 0
-                    numerator = self.dictionary[key][nMinusOne]
-                    for v in self.dictionary[key].values():
-                        i += 1
-                        denominator += v
-                    denominator += float(self.unique_words - i) * zero_count
-                else:
-                    print("Hit a spot where it should never go.")
-                p += math.log10(denominator / numerator)
-            return 10**(p * (1. / float(length)))   
-        except:
-            #print("Infinity")
-            return 0
-
-    #Generates a random sentence based on the current gram model.
-    def randomSentence(self):
-        prev = "['<s>']"
-        sentence = ""
-        if self.smoothing_bound > 0:
-            zero_count = float(self.count_list[1]) / float(self.count_list[0])
-        else:
-            zero_count = 0
-        if self.n == 1:
-            while True:
-                rand = random.random()
-                runningSum = 0.
-                for (k,v) in self.dictionary['[]'].iteritems():
-                    runningSum += float(v) / (self.total_grams)
-                    if (runningSum >= rand):
-                        if k == "<s>":
-                            break
-                        if k == "</s>":
-                            return sentence
-                        sentence += " " + k
-                        break
-        elif self.n > 2:
-            print("ERROR: Random sentences does not work on n grams where n > 2")
-            return ""
-        #Import bigram table if it exists
-        #Otherwise generate one
-        while True:
-            sum = float(0)
-            rand = random.random()
-            if prev in self.dictionary:
-                i = 0
-                for v in self.dictionary[prev].values():
-                    i += 1
-                    sum += v
-                sum += float(self.unique_words - i) * zero_count
-                    #sum += float(totalCount - i) * p
-                    #TO-DO: Need to add in (total number of ngrams possible - ngrams seen) * prob(0 occurrences)
-            
-                runningSum = float(0)
-                for (k,v) in self.dictionary[prev].iteritems():
-                    runningSum += v / sum
-                    if (runningSum >= rand):
-                        if k == "<s>":
-                            break
-                        if k == "</s>":
-                            return sentence
-                        sentence += " " + k
-                        prev = "['" + k + "']"
-                        break
+        for word in text:
+            length += 1
+            #Maintain queue of n most recent words
+            lst.append(word) 
+            if len(lst) < self.n:
+                continue
+            while len(lst) > self.n:
+                lst.pop(0)
+            key = str(lst)
+            #Need to adjust these for unknown words
+            if self.smoothing_bound > 0:
+                zero_count = float(self.count_list[1]) / float(self.count_list[0])
             else:
-                return sentence
+                zero_count = 0
+            numerator = 0.
+            denominator = 0.
+
+            if not (key in self.dictionary):
+                numerator = zero_count
+                denominator = self.total_grams + (zero_count * self.count_list[0])
+            elif key in self.dictionary:
+                i = 0
+                numerator = self.dictionary[key]
+                #DOUBLE DOUBLE DOUBLE CHECK THIS!!!
+                denominator += self.dictionary[key]
+                denominator += float(self.unique_words - i) * zero_count
+            p += math.log10(denominator / numerator)
+        return 10**(p * (1. / float(length)))   
+
+    def get_count(self, gram):
+        gram = str(gram)
+        if gram in self.dictionary:
+            return self.dictionary[gram]
+        else:
+            return 0
