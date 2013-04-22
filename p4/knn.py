@@ -1,4 +1,5 @@
 import math
+import ngram
 class Knn:
     #token_list: List of lists of words/characters/parts of speech that'll we'll turn into ngrams
     def init(self, k, n, deceptive_list, truthful_list):
@@ -7,13 +8,12 @@ class Knn:
         self.decptive_ngrams = list() #Each training sentence gets its own n-gram model
         self.truthful_ngrams = list()
         for lst in deceptive_list:
-            self.decptive_ngrams.append(ngram(n, lst, 0))
+            self.decptive_ngrams.append(ngram.Gram(n, lst, 0))
         for lst in truthful_list:
-            self.truthful_ngrams.append(ngram(n, lst, 0))
+            self.truthful_ngrams.append(ngram.Gram(n, lst, 0))
 
     #Returns true iff istruthful. Assumes that test was broken down into a list of words/pos/chars
     def classify(self, test):
-        pass
         #Generate an n-gram for test
         test_ngram = ngram(n, test, 0) 
         #For each ngram in the deceptive and truthful ngrams, calculate the distance and keep track of the k closest training examples
@@ -37,7 +37,7 @@ class Knn:
     #Returns the normalized manhattan distance between the test n-gram and a train n-gram
     def manhattan(self, test_ngram, train_ngram):
         sum = 0.
-        for ngram in test_ngram.dictionary.keys:
+        for ngram in test_ngram.dictionary.keys():
             sum += math.fabs(test_ngram.get_count(ngram) - train_ngram.get_count(ngram))
         for ngram in train_ngram.dictionary.keys:
             sum += math.fabs(train_ngram.get_count(ngram) - test_ngram.get_count(ngram))
