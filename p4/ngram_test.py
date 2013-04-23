@@ -6,6 +6,7 @@ class TestSequenceFunctions(unittest.TestCase):
     def setUp(self):
         
         self.apple_gram = ngram.Gram(2, ["apple", "ate", "an", "apple", "ate"], 1)
+        print(str(self.apple_gram.dictionary))
         print(str(self.apple_gram.getPerplexity(["apple", "ate", "a", "cat"])))
         print(str(self.apple_gram.getPerplexity(["orange", "grape", "lemon", "tomato"])))
 

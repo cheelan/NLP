@@ -2,7 +2,7 @@ import math
 import ngram
 class Knn:
     #token_list: List of lists of words/characters/parts of speech that'll we'll turn into ngrams
-    def init(self, k, n, deceptive_list, truthful_list):
+    def __init__(self, k, n, deceptive_list, truthful_list):
         self.k = k
         self.n = n
         self.decptive_ngrams = list() #Each training sentence gets its own n-gram model
