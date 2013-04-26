@@ -8,12 +8,23 @@ def text_to_word_list(filename):
     pass
 
 def text_to_char_list(filename):
-    pass
+    f = open(filename)
+    char_list = []
+    for line in f:
+        if "IsTruthFul" in line:
+            continue
+        else:
+            char_list.append("<s>")
+            i = 0
+            for c in line:
+                if i > 3:
+                    char_list.append(c)
+                i += 1
+            char_list.append("</s>")
+    return char_list
 
 def text_to_pos_list(filename):
     pass
-
-
 
 #test_list is a list of reviews, where each review is a list of words/chars/pos
 #Untested but I think this is done
@@ -31,8 +42,4 @@ def test_perplexity(n, smoothingBound, deceptive_list, truthful_list, test_list)
     for test in test_list:
         ans.append(perplexity_model.classify(test))
 
-
-
-
-
-
+print text_to_char_list('test_small.txt')
