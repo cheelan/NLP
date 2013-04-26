@@ -12,6 +12,16 @@ def parse_line(text):
         i += 1
     return output
 
+def get_validation_data(filename):
+    f = open(filename)
+    ans_list = []
+    for line in f:
+        if "IsTruthFul" in line:
+            continue
+        else:
+            ans_list.append(line[0])
+    return ans_list
+
 def text_to_word_list(filename):
     f = open(filename)
     word_list = []
@@ -75,4 +85,5 @@ def test_perplexity(n, smoothingBound, deceptive_list, truthful_list, test_list)
 
 #print text_to_char_list('test_small.txt')
 #print text_to_word_list('test_small.txt')
-print text_to_pos_list('test_small.txt')
+#print text_to_pos_list('test_small.txt')
+print get_validation_data('Train data')
