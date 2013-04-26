@@ -1,11 +1,30 @@
-import ngram, knn, perplexity
+import ngram, knn, perplexity, nltk.tokenize
 #These three methods take raw text files and convert them to lists of tokens. These lists will be the inputs 
 #to the ngram constructors. Chances are it would be good to use helper function so that 
 #massive amounts of code aren't repeated
 
+def parse_line(text):
+    output = ""
+    i = 0
+    for c in text:
+        if i > 3:
+            output += c
+        i += 1
+    return output
+
 def text_to_word_list(filename):
-    #Should use <s> and </s> in this one only, probably
-    pass
+    f = open(filename)
+    word_list = []
+    for line in f:
+        if "IsTruthFul" in line:
+            continue
+        else:
+            word_list.append("<r>")
+            for sent in nltk.tokenize.sent_tokenize(parse_line(line)):
+                for word in (['<s>'] + nltk.tokenize.word_tokenize(sent) + ['</s>']):
+                    word_list.append(word)
+            word_list.append("</r>")
+    return word_list
 
 def text_to_char_list(filename):
     f = open(filename)
@@ -14,17 +33,29 @@ def text_to_char_list(filename):
         if "IsTruthFul" in line:
             continue
         else:
-            char_list.append("<s>")
-            i = 0
-            for c in line:
-                if i > 3:
-                    char_list.append(c)
-                i += 1
-            char_list.append("</s>")
+            char_list.append("<r>")
+            for c in parse_line(line):
+                char_list.append(c)
+            char_list.append("</r>")
     return char_list
 
 def text_to_pos_list(filename):
-    pass
+    f = open(filename)
+    pos_list = []
+    for line in f:
+        if "IsTruthFul" in line:
+            continue
+        else:
+            pos_list.append("<r>")
+            for sent in nltk.tokenize.sent_tokenize(parse_line(line)):
+                pos_list.append("<s>")
+                text = nltk.word_tokenize(sent)
+                tagged = nltk.pos_tag(text)
+                for t in tagged:
+                    pos_list.append(t)
+                pos_list.append("</s>")
+            pos_list.append("</r>")
+    return pos_list
 
 #test_list is a list of reviews, where each review is a list of words/chars/pos
 #Untested but I think this is done
@@ -42,4 +73,6 @@ def test_perplexity(n, smoothingBound, deceptive_list, truthful_list, test_list)
     for test in test_list:
         ans.append(perplexity_model.classify(test))
 
-print text_to_char_list('test_small.txt')
+#print text_to_char_list('test_small.txt')
+#print text_to_word_list('test_small.txt')
+print text_to_pos_list('test_small.txt')
