@@ -163,22 +163,29 @@ test_word_list = []
 for t in test_cases:
     temp = text_to_word_list([t])
     test_word_list.append(temp[0] + temp[1]) 
-
+'''
+#Comment out when not using because it's slow
 test_pos_list = []
 for t in test_cases:
     temp = text_to_pos_list([t])
     test_pos_list.append(temp[0] + temp[1]) 
-
+'''
 
 #Deceptive and truthful lists (not n-grams)
 #(dchar_list, tchar_list) = text_to_char_list(train_reviews)
-#(dword_list, tword_list) = text_to_word_list(train_reviews)
-(dpos_list, tpos_list) = text_to_pos_list(train_reviews)
+(dword_list, tword_list) = text_to_word_list(train_reviews)
+#(dpos_list, tpos_list) = text_to_pos_list(train_reviews)
 
+
+#Perplexity attempts
 #p_attempts = test_perplexity(2, 2, dchar_list, tchar_list, test_char_list)
 #p_attempts = test_perplexity(2, 2, dword_list, tword_list, test_word_list)
-p_attempts = test_perplexity(2, 2, dpos_list, tpos_list, test_pos_list)
-print(str(p_attempts))
+#p_attempts = test_perplexity(2, 2, dpos_list, tpos_list, test_pos_list)
+#print(str(p_attempts))
+
+#KNN Attempts
+knn_attempts = test_knn(5, 2, dword_list, tword_list, test_word_list)
+print(str(knn_attempts))
 
 
 #print("ROS Score: " + str(ros(p_attempts, get_validation_data("validation_test.txt"))))
