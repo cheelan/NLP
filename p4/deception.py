@@ -1,4 +1,6 @@
 import ngram, knn, perplexity, nltk.tokenize, sys, time
+from pyroc import ROCData
+
 #These three methods take raw text files and convert them to lists of tokens. These lists will be the inputs 
 #to the ngram constructors. Chances are it would be good to use helper function so that 
 #massive amounts of code aren't repeated
@@ -117,18 +119,29 @@ def test_perplexity(n, smoothingBound, deceptive_list, truthful_list, test_list)
         ans.append(perplexity_model.classify(test))
     return ans
 
+def ros(ouranswers, rightanswers):
+    assert(len(ouranswers) == len(rightanswers))
+    '''
+    #Not working. Check this out: https://www.kaggle.com/c/SemiSupervisedFeatureLearning/forums/t/919/auc-implementation/6136#post6136
+    ros_sample = []
+    for i in range(0, len(ouranswers)):
+        ros_sample.append((rightanswers[i], ouranswers[i]))
+    roc = ROCData(ros_sample)
+    return roc.auc()
+    '''
+
 
 
 
 #THIS CODE ACTUALLY RUNS THE PROGRAM
 
 #Training reviews
-#train_reviews = read_file("validation_train.txt")
-train_reviews = read_file("Train data")
+train_reviews = read_file("validation_train.txt")
+#train_reviews = read_file("Train data")
 
 #Test cases (in string format)
-#test_cases = gen_test_lists("validation_test.txt")
-test_cases = gen_test_lists("Test data")
+test_cases = gen_test_lists("validation_test.txt")
+#test_cases = gen_test_lists("Test data")
 
 #Generate character lists for each test case
 test_char_list = []
@@ -149,8 +162,13 @@ for t in test_cases:
 
 #p_attempts = test_perplexity(2, 2, dchar_list, tchar_list, test_char_list)
 p_attempts = test_perplexity(2, 2, dword_list, tword_list, test_word_list)
-print(str(p_attempts))
 
+
+print("ROS Score: " + str(ros(p_attempts, get_validation_data("validation_test.txt"))))
+#print(str(p_attempts))
+
+
+print("Done")
 sys.exit()
 #print text_to_char_list('test_small.txt')
 
