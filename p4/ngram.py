@@ -50,7 +50,7 @@ class Gram:
 
         self.unique_words = len(self.vocab)
         self.count_list[0] = self.unique_words**n - unique_ngrams
-        print("Current Model Completed.")
+        #print("Current Model Completed.")
         if (self.smoothing_bound > 0):
             self.apply_smoothing()
 
