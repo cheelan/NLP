@@ -8,4 +8,12 @@ class Perplexity:
         self.truthful_model = ngram.Gram(n, truthful_list, smoothingBound)
     
     def classify(self, test):
-        return self.truthful_model.getPerplexity(test) > self.deceptive_model.getPerplexity(test) 
+        ptrue = self.truthful_model.getPerplexity(test) 
+        pdeceptive = self.deceptive_model.getPerplexity(test) 
+        if ptrue < pdeceptive:
+            return 0
+        elif ptrue > pdeceptive:
+            return 1
+        else:
+            print("Perplexity tie")
+            return 1
