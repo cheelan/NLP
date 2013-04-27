@@ -12,6 +12,16 @@ def parse_line(text):
         i += 1
     return output
 
+def get_validation_data(filename):
+    f = open(filename)
+    ans_list = []
+    for line in f:
+        if "IsTruthFul" in line:
+            continue
+        else:
+            ans_list.append(line[0])
+    return ans_list
+
 def text_to_word_list(lst):
     dword_list = []
     tword_list = []
@@ -143,5 +153,4 @@ print(str(p_attempts))
 
 sys.exit()
 #print text_to_char_list('test_small.txt')
-#print text_to_word_list('validation_test.txt')
-#print text_to_pos_list('test_small.txt')
+
