@@ -34,6 +34,7 @@ for line in testing_data:
     for word in word_list:
         vector.append(test.get_count(word))
     prediction = clf.predict(vector)
+    print("State: " + str(state) + " Prediction: " + str(prediction))
     if (int(state) == prediction):
         correct+=1
     else:
