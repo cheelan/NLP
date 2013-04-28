@@ -95,3 +95,4 @@ def test(filename, unit):
 
 train("validation_train.txt", "unichar")
 test("validation_test.txt", "unichar")
+
