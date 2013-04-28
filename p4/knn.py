@@ -2,10 +2,16 @@ import math, time
 from ngram import *
 import Queue
 import covertree
+import pickle
 
 class Knn:
     #token_list: List of lists of words/characters/parts of speech that'll we'll turn into ngrams
-    def __init__(self, k, n, deceptive_list, truthful_list):
+    def __init__(self, k, n, deceptive_list, truthful_list, importname=""):
+        if importname != "":
+            with open(importname, 'rb') as f:
+                self.ct = pickle.load(f)
+                print("Loaded training file " + importname)
+            return
         self.k = k
         self.n = n
         self.deceptive_ngrams = list() #Each training sentence gets its own n-gram model
@@ -14,17 +20,23 @@ class Knn:
             self.deceptive_ngrams.append(Gram(n, lst, 0))
         for lst in truthful_list:
             self.truthful_ngrams.append(Gram(n, lst, 0))
+        self.ct = covertree.CoverTree(manhattan)
+        for ngram in self.deceptive_ngrams:
+            self.ct.insert((ngram, 0))
+        for ngram in self.truthful_ngrams:
+            self.ct.insert((ngram, 1))
+        #Pickle this
+        with open('knn.pickle', 'wb') as f: 
+            pickle.dump(self.ct, f)
+            print("Done pickling")
+        
  
     def skclassify(self, test_lst):
-        ct = covertree.CoverTree(manhattan)
-        for ngram in self.deceptive_ngrams:
-            ct.insert((ngram, 0))
-        for ngram in self.truthful_ngrams:
-            ct.insert((ngram, 1))
+
         ans = []
         print("Starting the fun")
         for t in test_lst:
-            knns = ct.knn(self.k, (Gram(self.n, t, 0), 0))
+            knns = self.ct.knn(self.k, (Gram(self.n, t, 0), 0))
             reals = 0
             fakes = 0
             for neighbor in knns:
