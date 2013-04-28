@@ -1,4 +1,4 @@
-import ngram, knn, perplexity, nltk.tokenize, sys, time
+import ngram, knn, perplexity, nltk.tokenize, sys, time, nltk
 
 #These three methods take raw text files and convert them to lists of tokens. These lists will be the inputs 
 #to the ngram constructors. Chances are it would be good to use helper function so that 
@@ -30,6 +30,7 @@ def text_to_word_list(lst):
         if "IsTruthFul" in line:
             continue
         else:
+            line = line.lower()
             if line[0] == "0": #If deceptive:
                 dword_list.append("<r>")
                 for sent in nltk.tokenize.sent_tokenize(parse_line(line)):
@@ -42,6 +43,27 @@ def text_to_word_list(lst):
                     for word in (['<s>'] + nltk.tokenize.word_tokenize(sent) + ['</s>']):
                         tword_list.append(word)
                 tword_list.append("</r>")
+    return (dword_list, tword_list)
+
+#For knn
+def text_to_word_list_list(lst):
+    dword_list = []
+    tword_list = []
+    for line in lst:
+        if "IsTruthFul" in line:
+            continue
+        else:
+            line = line.lower()
+            temp = []
+            temp.append("<r>")
+            for sent in nltk.tokenize.sent_tokenize(parse_line(line)):
+                for word in (['<s>'] + nltk.tokenize.word_tokenize(sent) + ['</s>']):
+                    temp.append(word)
+            temp.append("</r>")
+            if line[0] == "0":
+                dword_list.append(temp)
+            else:
+                tword_list.append(temp)
     return (dword_list, tword_list)
 
 def text_to_char_list(lst):
@@ -173,9 +195,11 @@ for t in test_cases:
 
 #Deceptive and truthful lists (not n-grams)
 #(dchar_list, tchar_list) = text_to_char_list(train_reviews)
-(dword_list, tword_list) = text_to_word_list(train_reviews)
+#(dword_list, tword_list) = text_to_word_list(train_reviews)
 #(dpos_list, tpos_list) = text_to_pos_list(train_reviews)
 
+#Deceptive and truthful lists for KNN
+(dword_list, tword_list) = text_to_word_list_list(train_reviews)
 
 #Perplexity attempts
 #p_attempts = test_perplexity(2, 2, dchar_list, tchar_list, test_char_list)
@@ -184,7 +208,9 @@ for t in test_cases:
 #print(str(p_attempts))
 
 #KNN Attempts
-knn_attempts = test_knn(5, 2, dword_list, tword_list, test_word_list)
+#knn_attempts = test_knn(5, 2, dword_list, tword_list, test_word_list)
+knn_model = knn.Knn(15, 2, dword_list, tword_list)
+knn_attempts = knn_model.skclassify(test_word_list)
 print(str(knn_attempts))
 
 
