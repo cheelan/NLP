@@ -226,7 +226,7 @@ for t in test_cases:
 #SVM Attempts
 svm_model = SvmLiteWrapper.SvmLiteWrapper(2, dword_list, tword_list)
 svm_model.learn()
-svm_attempts = svm_model.classify(test_word_list, 2)
+svm_attempts = svm_model.classify(test_word_list)
 print str(svm_attempts)
 
 #print("ROS Score: " + str(ros(p_attempts, get_validation_data("validation_test.txt"))))
