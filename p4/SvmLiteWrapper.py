@@ -13,6 +13,7 @@ class SvmLiteWrapper:
 
     def __init__(self, n, deceptive_list_list, truthful_list_list):
         #Generate truthful and deceptive ngrams
+        self.n = n
         self.truthful_ngrams = []
         for review in truthful_list_list:
             self.truthful_ngrams.append(ngram.Gram(n, review, 0))
@@ -113,11 +114,11 @@ class SvmLiteWrapper:
         lst.sort(_compare)
         return lst
 
-    def classify(self, test_list_list, n, train_model_location="train_model.txt", test_model_location="test_model.txt"):
+    def classify(self, test_list_list, train_model_location="train_model.txt", test_model_location="test_model.txt"):
         #Generate ngram list for each test review
         ngrams = []
         for review in test_list_list:
-            ngrams.append(ngram.Gram(n, review, 0))
+            ngrams.append(ngram.Gram(self.n, review, 0))
         #Convert to svm format using your own function or self._gen_train_file(test_ngram_list, [])
         self._gen_test_file(ngrams)
         #Call svm_classify.exe
