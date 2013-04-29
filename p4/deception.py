@@ -1,4 +1,4 @@
-import ngram, knn, perplexity, nltk.tokenize, sys, time, nltk
+import ngram, knn, perplexity, nltk.tokenize, sys, time, nltk, SvmLiteWrapper
 
 #These three methods take raw text files and convert them to lists of tokens. These lists will be the inputs 
 #to the ngram constructors. Chances are it would be good to use helper function so that 
@@ -207,7 +207,7 @@ for t in test_cases:
 #(dword_list, tword_list) = text_to_word_list(train_reviews)
 #(dpos_list, tpos_list) = text_to_pos_list(train_reviews)
 
-#Deceptive and truthful lists for KNN
+#Deceptive and truthful lists for KNN and SVM
 (dword_list, tword_list) = text_to_word_list_list(train_reviews)
 
 #Perplexity attempts
@@ -219,10 +219,13 @@ for t in test_cases:
 
 #KNN Attempts
 #knn_attempts = test_knn(5, 2, dword_list, tword_list, test_word_list)
-knn_model = knn.Knn(15, 2, dword_list, tword_list)
-knn_attempts = knn_model.skclassify(test_word_list)
-print(str(knn_attempts))
+#knn_model = knn.Knn(15, 2, dword_list, tword_list)
+#knn_attempts = knn_model.skclassify(test_word_list)
+#print(str(knn_attempts))
 
+#SVM Attempts
+svm_model = SvmLiteWrapper.SvmLiteWrapper(2, dword_list, tword_list)
+svm_model.learn()
 
 #print("ROS Score: " + str(ros(p_attempts, get_validation_data("validation_test.txt"))))
 #print(str(p_attempts))
