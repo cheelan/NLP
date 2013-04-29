@@ -12,13 +12,13 @@ training_data = open("validation_train.txt").readlines()
 for line in training_data:
     if "IsTruthFul" in line:
         continue
-	isTruthful = line[0]
-	[state, sentiment, review] = line.split(",")
-	print(isTruthful)
-	if int(isTruthful) == 0:
-		deceptive+= review.lower().strip().split()
-	else:
-		truthful+= review.lower().strip().split()
+    isTruthful = line[0]
+    [state, sentiment, review] = line.split(",")
+    print(isTruthful)
+    if int(isTruthful) == 0:
+        deceptive+= review.lower().strip().split()
+    else:
+        truthful+= review.lower().strip().split()
 print(deceptive)
 print(truthful)
 		
@@ -48,7 +48,7 @@ for line in testing_data:
 	[state, sentiment, review] = line.split(",")
 	# review = [ps.stem(word) for word in review.lower().strip().split()]
 	test = Gram(2,review,1)
-	vector = list()
+	test_vector = list()
 	tvector = list()
 	dvector = list()
 	tvectorcount=1.0
@@ -73,14 +73,14 @@ for line in testing_data:
 		vectorcount+= test.get_count(word)
 		tvector.append((truthful1.get_count(word)))
 		dvector.append(deceptive1.get_count(word))
-		vector.append(test.get_count(word))
+		test_vector.append(test.get_count(word))
 	# print dvector
 	# print tvectorcount
 	# print dvectorcount
 	# print vectorcount
 	tvectorNew=[x/tvectorcount for x in tvector]
 	dvectorNew=[x/dvectorcount for x in dvector]
-	vectorNew=[x/vectorcount for x in vector]
+	vectorNew=[x/vectorcount for x in test_vector]
 	vectors = [tvectorNew, dvectorNew]
 	states = [1, 0]
 	clf = svm.SVC()

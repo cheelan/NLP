@@ -20,7 +20,7 @@ class Knn:
             self.deceptive_ngrams.append(Gram(n, lst, 0))
         for lst in truthful_list:
             self.truthful_ngrams.append(Gram(n, lst, 0))
-        self.ct = covertree.CoverTree(manhattan)
+        self.ct = covertree.CoverTree(hamming)
         for ngram in self.deceptive_ngrams:
             self.ct.insert((ngram, 0))
         for ngram in self.truthful_ngrams:
@@ -100,4 +100,11 @@ def manhattan(test_ngram, train_ngram):
         sum += math.fabs(train_ngram.get_count(ngram) - test_ngram.get_count(ngram))
     return float(sum) / float((len(test_ngram.dictionary.keys()) + len(train_ngram.dictionary.keys())))
         
-    
+def hamming(test_ngram, train_ngram):
+    #Only needed with cover tree
+    test_ngram = test_ngram[0]
+    train_ngram = train_ngram[0]
+    sum = 0
+    for ngram in set(test_ngram.dictionary.keys() + train_ngram.dictionary.keys()):
+        sum += test_ngram.get_count(ngram) == train_ngram.get_count(ngram)
+    return sum
