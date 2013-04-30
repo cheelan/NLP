@@ -96,14 +96,14 @@ def manhattan(test_ngram, train_ngram):
     total = 0
     for ngram in test_ngram.dictionary.keys():
         sum += math.fabs(test_ngram.get_count(ngram) - train_ngram.get_count(ngram))
-        total += test_ngram.get_count(ngram)
-        total += train_ngram.get_count(ngram)
+        #total += test_ngram.get_count(ngram)
+        #total += train_ngram.get_count(ngram)
     for ngram in train_ngram.dictionary.keys():
         sum += math.fabs(train_ngram.get_count(ngram) - test_ngram.get_count(ngram))
-        total += test_ngram.get_count(ngram)
-        total += train_ngram.get_count(ngram)
-    return float(sum) / total
-    #return float(sum) / float((len(test_ngram.dictionary.keys()) + len(train_ngram.dictionary.keys())))
+        #total += test_ngram.get_count(ngram)
+        #total += train_ngram.get_count(ngram)
+    #return float(sum) / total
+    return float(sum) / float((len(test_ngram.dictionary.keys()) + len(train_ngram.dictionary.keys())))
         
 def hamming(test_ngram, train_ngram):
     #Only needed with cover tree
