@@ -4,14 +4,14 @@ use_words = 1
 use_chars = 0
 use_pos = 0
 
-use_perplexity = 0
-use_knn = 1
+use_perplexity = 1
+use_knn = 0
 use_svm = 0
 
 use_train = 0 #If 0, use validation data, otherwise use full data
 
 #Other paramaters to adjust
-n = 2   #n in ngram
+n = 1   #n in ngram
 k = 31  #k in knn
 
 
@@ -237,7 +237,7 @@ def accuracy(ouranswers, rightanswers):
 rightanswers = []
 #Training reviews and test reviews
 if use_train == 0:
-    train_reviews = read_file("validation_train.txt")
+    train_reviews = read_file("validation_train10.txt")
     test_cases = gen_test_lists("validation_test.txt")
     rightanswers = get_validation_data("validation_test.txt")
 else:
