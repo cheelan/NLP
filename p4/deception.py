@@ -229,8 +229,8 @@ def accuracy(ouranswers, rightanswers):
         if ouranswers[i] == rightanswers[i]:
             right += 1
         total += 1
-    print(right)
-    print(total)
+    #print(right)
+    #print(total)
     return float(right) / float(total)
 
 #THIS CODE ACTUALLY RUNS THE PROGRAM
@@ -301,14 +301,18 @@ if use_pos:
         svm_model.learn()
         attempts = svm_model.classify(test_pos_list)
 
-if not use_train:
-    print("Accuracy: " + str(accuracy(attempts, rightanswers)))
-
-print(attempts)
-
-
+#print(attempts)
+# Check answers if using validation
+if use_train == 0:
+    # Get correct answers
+    test_reviews = read_file("validation_test.txt")
+    correct_answers = list()
+    for line in test_reviews:
+        correct_answers.append(int(line[0]))
+    accuracy = accuracy(attempts,correct_answers)
+    print("Accuracy: " + str(accuracy))
+    
 #Perplexity attempts
-
 #p_attempts = test_perplexity(2, 2, dpos_list, tpos_list, test_pos_list)
 #print("Accuracy: " + str(accuracy(p_attempts, get_validation_data("validation_test.txt"))))
 #p_attempts = test_perplexity(2, 2, dpos_list, tpos_list, test_pos_list)
@@ -327,10 +331,22 @@ print(attempts)
 #svm_attempts = svm_model.classify(test_word_list)
 #print str(svm_attempts)
 
+'''
+#######################################################################
+
+input_data = open("Kaggle.csv").readlines()
+predicted_answers = list()
+for num in input_data:
+    predicted_answers.append(int(num))
+#print(str(len(predicted_answers)) + ' ' + str(len(correct_answers)))
+
+#######################################################################
+
 f = open("Kaggle.csv",'w')
-for line in attempts:
+for line in svm_attempts:
     f.write(str(line)+'\n')
 f.close()
+'''
 
 #print("ROS Score: " + str(ros(p_attempts, get_validation_data("validation_test.txt"))))
 #print(str(p_attempts))
