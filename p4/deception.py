@@ -1,5 +1,25 @@
 import ngram, knn, perplexity, nltk.tokenize, sys, time, nltk, SvmLiteWrapper
 
+use_words = 0
+use_chars = 0
+use_pos = 0
+
+use_perplexity = 0
+use_knn = 0
+use_svm = 0
+
+use_train = 0 #If 1, use validation data, otherwise use full data
+
+#Other paramaters to adjust
+n = 2   #n in ngram
+k = 31  #k in knn
+
+
+if (use_words + use_chars + use_pos != 1):
+    print ("Only one feature at a time please")
+if (use_perplexity+ use_knn + use_svm != 1):
+    print ("Only one learning algorithm at a time please")
+
 #These three methods take raw text files and convert them to lists of tokens. These lists will be the inputs 
 #to the ngram constructors. Chances are it would be good to use helper function so that 
 #massive amounts of code aren't repeated
@@ -66,6 +86,24 @@ def text_to_word_list_list(lst):
                 tword_list.append(temp)
     return (dword_list, tword_list)
 
+def text_to_char_list_list(lst):
+    dchar_list = []
+    tchar_list = []
+    for line in lst:
+        if "IsTruthFul" in line:
+            continue
+        else:
+            temp = []
+            temp.append("<r>")
+            for c in parse_line(line):
+                temp.append(c)
+            temp.append("</r>")
+            if line[0] == "0":
+                dchar_list.append(temp)
+            else:
+                tchar_list.append(temp)
+    return (dchar_list, tchar_list)
+
 def text_to_char_list(lst):
     dchar_list = []
     tchar_list = []
@@ -114,6 +152,29 @@ def text_to_pos_list(lst):
                         tpos_list.append(t)
                     tpos_list.append("</s>")
                 tpos_list.append("</r>")
+    return (dpos_list, tpos_list)
+
+def text_to_pos_list_list(lst):
+    dpos_list = []
+    tpos_list = []
+    for line in lst:
+        if "IsTruthFul" in line:
+            continue
+        else:
+            temp = []
+            temp.append("<r>")
+            for sent in nltk.tokenize.sent_tokenize(parse_line(line)):
+                temp_list.append("<s>")
+                text = nltk.word_tokenize(sent)
+                tagged = nltk.pos_tag(text)
+                for t in tagged:
+                    temp.append(t)
+                temp.append("</s>")
+            temp.append("</r>")
+            if line[0] == "0":
+                dchar_list.append(temp)
+            else:
+                tchar_list.append(temp)
     return (dpos_list, tpos_list)
 
 #Returns list of string-reviews
@@ -175,43 +236,77 @@ def accuracy(ouranswers, rightanswers):
 
 #THIS CODE ACTUALLY RUNS THE PROGRAM
 
-#Training reviews
-#train_reviews = read_file("validation_train.txt")
-train_reviews = read_file("Train data")
+#Training reviews and test reviews
+if use_train == 0:
+    train_reviews = read_file("validation_train.txt")
+    test_cases = gen_test_lists("validation_test.txt")
+else:
+    train_reviews = read_file("Train data")
+    test_cases = gen_test_lists("Test data")
 
-#Test cases (in string format)
-#test_cases = gen_test_lists("validation_test.txt")
-test_cases = gen_test_lists("Test data")
 
 #Generate character lists for each test case
-test_char_list = []
-for t in test_cases:
-    temp = text_to_char_list([t])
-    test_char_list.append(temp[0] + temp[1]) 
+if use_chars:
+    test_char_list = []
+    for t in test_cases:
+        temp = text_to_char_list([t])
+        test_char_list.append(temp[0] + temp[1]) 
+    (dchar_list, tchar_list) = text_to_char_list(train_reviews)
+    if use_perplexity:
+        attempts = test_perplexity(n, 2, dchar_list, tchar_list, test_char_list)
+    if use_knn:
+        knn_model = knn.Knn(k, n, dchar_list_list, tchar_list_list)
+        attempts = knn_model.skclassify(test_char_list)
+    if use_svm:
+        svm_model = SvmLiteWrapper.SvmLiteWrapper(2, dchar_list, tchar_list)
+        svm_model.learn()
+        attempts = svm_model.classify(test_char_list)
+
 
 #Generate word lists for each test case
-test_word_list = []
-for t in test_cases:
-    temp = text_to_word_list([t])
-    test_word_list.append(temp[0] + temp[1]) 
+if use_words:
+    test_word_list = []
+    for t in test_cases:
+        temp = text_to_word_list([t])
+        test_word_list.append(temp[0] + temp[1]) 
+    if use_perplexity:
+        (dword_list, tword_list) = text_to_word_list(train_reviews)
+        attempts = test_perplexity(n, 2, dword_list, tword_list, test_word_list)
+    if use_knn:
+        (dword_list, tword_list) = text_to_word_list_list(train_reviews)
+        knn_model = knn.Knn(k, n, dword_list, tword_list)
+        attempts = knn_model.skclassify(test_word_list)
+    if use_svm:
+        (dword_list, tword_list) = text_to_word_list_list(train_reviews)
+        svm_model = SvmLiteWrapper.SvmLiteWrapper(2, dword_list, tword_list)
+        svm_model.learn()
+        attempts = svm_model.classify(test_word_list)
 
-#Comment out when not using because it's slow
-test_pos_list = []
-for t in test_cases:
-    temp = text_to_pos_list([t])
-    test_pos_list.append(temp[0] + temp[1]) 
+
+if use_pos:
+    test_pos_list = []
+    for t in test_cases:
+        temp = text_to_pos_list([t])
+        test_pos_list.append(temp[0] + temp[1]) 
+    if use_perplexity:
+        (dpos_list, tpos_list) = text_to_pos_list(train_reviews)
+        attempts = test_perplexity(n, 2, dpos_list, tpos_list, test_pos_list)
+    if use_knn:
+        (dpos_list, tpos_list) = text_to_pos_list_list(train_reviews)
+        knn_model = knn.Knn(k, n, dpos_list, tpos_list)
+        attempts = knn_model.skclassify(test_pos_list)
+    if use_svm:
+        (dpos_list, tpos_list) = text_to_pos_list_list(train_reviews)
+        svm_model = SvmLiteWrapper.SvmLiteWrapper(2, dpos_list, tpos_list)
+        svm_model.learn()
+        attempts = svm_model.classify(test_pos_list)
 
 
-#Deceptive and truthful lists (not n-grams)
-#(dchar_list, tchar_list) = text_to_char_list(train_reviews)
-#(dword_list, tword_list) = text_to_word_list(train_reviews)
-#(dpos_list, tpos_list) = text_to_pos_list(train_reviews)
 
-#Deceptive and truthful lists for KNN and SVM
-(dword_list, tword_list) = text_to_word_list_list(train_reviews)
+
 
 #Perplexity attempts
-#p_attempts = test_perplexity(2, 2, dchar_list, tchar_list, test_char_list)
+
 #p_attempts = test_perplexity(2, 2, dpos_list, tpos_list, test_pos_list)
 #print("Accuracy: " + str(accuracy(p_attempts, get_validation_data("validation_test.txt"))))
 #p_attempts = test_perplexity(2, 2, dpos_list, tpos_list, test_pos_list)
@@ -225,6 +320,7 @@ for t in test_cases:
 
 #SVM Attempts
 svm_model = SvmLiteWrapper.SvmLiteWrapper(2, dword_list, tword_list)
+print(svm_model.get_id(str(['i', 'could'])))
 svm_model.learn()
 svm_attempts = svm_model.classify(test_word_list)
 print str(svm_attempts)

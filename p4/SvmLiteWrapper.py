@@ -56,7 +56,9 @@ class SvmLiteWrapper:
         #This will generate a text file learning model in SVM format
         #Check to see if model already exists before re-generating it (bool param)
         self._gen_train_file(self.deceptive_ngrams, self.truthful_ngrams)
+        c = str(10.**(-3.))
         #Then call svm_learn.exe
+        #args = ['svm_learn.exe', ("-c "+c), "ngram_svm.txt", model_location]
         args = ['svm_learn.exe', "ngram_svm.txt", model_location]
         subprocess.call(args)
         print("Done generating SVM")
@@ -107,18 +109,24 @@ class SvmLiteWrapper:
     def _features_from_ngram(self, model):
         lst = []
         unknown = 0 #Number of unknown ngrams in testing
+        total = 0
         for k in model.dictionary.keys():
             id = self.get_id(k)
             count = model.get_count(k)
             if id == 1:
+                total += 1
                 unknown += 1
                 continue
+            total += count
             lst.append((id,count))
         if unknown>0:
             lst.append((1, unknown))
         #Sort by ids
         lst.sort(_compare)
-        return lst
+        normalized = []
+        for (i,c) in lst:
+            normalized.append((i, (float(c) / float(total))))
+        return normalized
 
     def classify(self, test_list_list, train_model_location="train_model.txt", test_model_location="test_model.txt"):
         #Generate ngram list for each test review
