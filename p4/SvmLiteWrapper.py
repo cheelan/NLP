@@ -114,7 +114,8 @@ class SvmLiteWrapper:
                 unknown += 1
                 continue
             lst.append((id,count))
-        lst.append((1, unknown))
+        if unknown>0:
+            lst.append((1, unknown))
         #Sort by ids
         lst.sort(_compare)
         return lst
