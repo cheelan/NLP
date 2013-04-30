@@ -229,6 +229,11 @@ svm_model.learn()
 svm_attempts = svm_model.classify(test_word_list)
 print str(svm_attempts)
 
+f = open("Kaggle.csv",'w')
+for line in svm_attempts:
+    f.write(str(line)+'\n')
+f.close()
+
 #print("ROS Score: " + str(ros(p_attempts, get_validation_data("validation_test.txt"))))
 #print(str(p_attempts))
 

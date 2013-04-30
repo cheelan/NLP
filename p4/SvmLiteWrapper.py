@@ -133,7 +133,11 @@ class SvmLiteWrapper:
         f = open("classified.txt")
         results = []
         for line in f:
-            results.append(line)
+            line=float(line)
+            if line>0:
+                results.append(1)
+            else:
+                results.append(0)
         f.close()
         #Return list of results
         #Integration with deception.py is virtually identical to knn's integration with deception.py
