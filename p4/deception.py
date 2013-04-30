@@ -4,11 +4,11 @@ use_words = 1
 use_chars = 0
 use_pos = 0
 
-use_perplexity = 1
-use_knn = 0
+use_perplexity = 0
+use_knn = 1
 use_svm = 0
 
-use_train = 0 #If 1, use validation data, otherwise use full data
+use_train = 0 #If 0, use validation data, otherwise use full data
 
 #Other paramaters to adjust
 n = 2   #n in ngram
@@ -225,7 +225,6 @@ def ros(ouranswers, rightanswers):
 def accuracy(ouranswers, rightanswers):
     right = 0
     total = 0
-    print(rightanswers)
     for i in range(0, len(ouranswers)):
         if ouranswers[i] == rightanswers[i]:
             right += 1
@@ -235,16 +234,17 @@ def accuracy(ouranswers, rightanswers):
     return float(right) / float(total)
 
 #THIS CODE ACTUALLY RUNS THE PROGRAM
-
+rightanswers = []
 #Training reviews and test reviews
 if use_train == 0:
     train_reviews = read_file("validation_train.txt")
     test_cases = gen_test_lists("validation_test.txt")
+    rightanswers = get_validation_data("validation_test.txt")
 else:
     train_reviews = read_file("Train data")
     test_cases = gen_test_lists("Test data")
 
-
+attempts = []
 #Generate character lists for each test case
 if use_chars:
     test_char_list = []
@@ -301,9 +301,11 @@ if use_pos:
         svm_model.learn()
         attempts = svm_model.classify(test_pos_list)
 
-
+if not use_train:
+    print("Accuracy: " + str(accuracy(attempts, rightanswers)))
 
 print(attempts)
+
 
 #Perplexity attempts
 

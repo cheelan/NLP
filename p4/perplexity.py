@@ -20,9 +20,9 @@ class Perplexity:
         ptrue = self.truthful_model.perplexity(test)
         pdeceptive = self.deceptive_model.perplexity(test)
         if ptrue < pdeceptive:
-            return 0
-        elif ptrue > pdeceptive:
             return 1
+        elif ptrue > pdeceptive:
+            return 0
         else:
             print("Perplexity tie")
             return 1
