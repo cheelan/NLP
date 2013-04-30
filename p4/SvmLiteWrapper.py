@@ -28,8 +28,8 @@ class SvmLiteWrapper:
 
     
     def gen_id_map(self):
-        #Start count at 1. Count = 0 implies unknown ngram
-        count = 1
+        #Start count at 2. Count = 1 implies unknown ngram
+        count = 2
         id_map = dict()
         for gram in self.deceptive_ngrams:
             for k in gram.dictionary.keys():
@@ -50,7 +50,7 @@ class SvmLiteWrapper:
     def get_id(self, gram):
         if self.id_map.has_key(gram):
             return self.id_map[gram]
-        return 0
+        return 1
 
     def learn(self, model_location="svm_model.txt"):
         #This will generate a text file learning model in SVM format
@@ -106,10 +106,15 @@ class SvmLiteWrapper:
         
     def _features_from_ngram(self, model):
         lst = []
+        unknown = 0 #Number of unknown ngrams in testing
         for k in model.dictionary.keys():
             id = self.get_id(k)
             count = model.get_count(k)
+            if id == 1:
+                unknown += 1
+                continue
             lst.append((id,count))
+        lst.append((1, unknown))
         #Sort by ids
         lst.sort(_compare)
         return lst
@@ -129,6 +134,7 @@ class SvmLiteWrapper:
         results = []
         for line in f:
             results.append(line)
+        f.close()
         #Return list of results
         #Integration with deception.py is virtually identical to knn's integration with deception.py
         return results
