@@ -1,10 +1,10 @@
 import ngram, knn, perplexity, nltk.tokenize, sys, time, nltk, SvmLiteWrapper
 
-use_words = 0
+use_words = 1
 use_chars = 0
 use_pos = 0
 
-use_perplexity = 0
+use_perplexity = 1
 use_knn = 0
 use_svm = 0
 
@@ -303,7 +303,7 @@ if use_pos:
 
 
 
-
+print(attempts)
 
 #Perplexity attempts
 
@@ -319,14 +319,14 @@ if use_pos:
 #print(str(knn_attempts))
 
 #SVM Attempts
-svm_model = SvmLiteWrapper.SvmLiteWrapper(2, dword_list, tword_list)
-print(svm_model.get_id(str(['i', 'could'])))
-svm_model.learn()
-svm_attempts = svm_model.classify(test_word_list)
-print str(svm_attempts)
+#svm_model = SvmLiteWrapper.SvmLiteWrapper(2, dword_list, tword_list)
+#print(svm_model.get_id(str(['i', 'could'])))
+#svm_model.learn()
+#svm_attempts = svm_model.classify(test_word_list)
+#print str(svm_attempts)
 
 f = open("Kaggle.csv",'w')
-for line in svm_attempts:
+for line in attempts:
     f.write(str(line)+'\n')
 f.close()
 
